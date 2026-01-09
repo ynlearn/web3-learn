@@ -22,10 +22,13 @@ describe("HelloWorld 合约测试", function () {
         // 获取测试账户
         [owner, addr1, addr2] = await ethers.getSigners();
 
-        // 部署合约，传入初始问候语
+        // 部署合约，使用默认问候语
         const HelloWorld = await ethers.getContractFactory("HelloWorld");
-        helloWorld = await HelloWorld.deploy("Hello, Initial World!");
+        helloWorld = await HelloWorld.deploy();
         await helloWorld.waitForDeployment();
+
+        // 设置初始问候语用于测试
+        await helloWorld.setGreet("Hello, Initial World!");
     });
 
     describe("合约部署", function () {
@@ -33,9 +36,9 @@ describe("HelloWorld 合约测试", function () {
             expect(await helloWorld.getGreet()).to.equal("Hello, Initial World!");
         });
 
-        it("应该使用默认问候语（空字符串参数）", async function () {
+        it("应该使用默认问候语", async function () {
             const HelloWorld = await ethers.getContractFactory("HelloWorld");
-            const hw = await HelloWorld.deploy("");
+            const hw = await HelloWorld.deploy();
             await hw.waitForDeployment();
             expect(await hw.getGreet()).to.equal("Hello, Web3 World!");
         });

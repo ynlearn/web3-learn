@@ -37,3 +37,4 @@ build/
 .cache/
 temp/
 tmp/
+.states/

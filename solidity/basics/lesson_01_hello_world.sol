@@ -39,15 +39,12 @@ contract HelloWorld {
     event CounterIncremented(uint256 newCount, address sender);
     
     // ==================== 构造函数 ====================
-    
+
     /**
      * @dev 构造函数，在合约部署时执行一次
-     * @param _initialGreet 初始问候语，如果不提供则使用默认值
+     * @notice 使用默认问候语，部署后可通过 setGreet() 修改
      */
-    constructor(string memory _initialGreet) {
-        if (bytes(_initialGreet).length > 0) {
-            greet = _initialGreet;
-        }
+    constructor() {
         emit GreetChanged("", greet);
     }
     
