@@ -3,8 +3,9 @@
  * 测试 ERC20、ERC721、ERC1155 三大代币标准
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("📘 Lesson 16: 代币标准完整实现", function () {
     let myToken, burnableToken, myNFT, myMultiToken, tokenComparison;

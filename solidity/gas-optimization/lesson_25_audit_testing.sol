@@ -60,6 +60,7 @@ contract TokenWithTests {
     }
     
     function transfer(address _to, uint256 _amount) public whenNotPaused returns (bool) {
+        require(_amount > 0, "Amount zero");
         require(_to != address(0), "Zero address");
         require(balanceOf[msg.sender] >= _amount, "Insufficient balance");
         
@@ -73,6 +74,7 @@ contract TokenWithTests {
     }
     
     function approve(address _spender, uint256 _amount) public whenNotPaused returns (bool) {
+        require(_amount > 0, "Amount zero");
         require(_spender != address(0), "Zero address");
         
         allowance[msg.sender][_spender] = _amount;
@@ -85,6 +87,7 @@ contract TokenWithTests {
         address _to,
         uint256 _amount
     ) public whenNotPaused returns (bool) {
+        require(_amount > 0, "Amount zero");
         require(_from != address(0), "Zero from");
         require(_to != address(0), "Zero to");
         require(balanceOf[_from] >= _amount, "Insufficient balance");
@@ -163,6 +166,7 @@ contract AuditedVault {
     
     event Deposit(address indexed account, uint256 amount);
     event Withdrawal(address indexed account, uint256 amount);
+    event WithdrawalLimitUpdated(uint256 oldLimit, uint256 newLimit);
     event OwnershipTransferInitiated(address indexed currentOwner, address indexed proposedOwner);
     event OwnershipTransferAccepted(address indexed previousOwner, address indexed newOwner);
     event EmergencyWithdraw(address indexed user, uint256 amount);
@@ -238,17 +242,18 @@ contract AuditedVault {
         bytes32 signatureHash = keccak256(_signature);
         require(!usedSignatures[signatureHash], "Signature used");
         usedSignatures[signatureHash] = true;
-        
+
         address signer = recoverSigner(_amount, _nonce, _signature);
         require(nonces[signer] == _nonce, "Invalid nonce");
         require(deposits[signer] >= _amount, "Insufficient balance");
-        
+
         nonces[signer] = _nonce + 1;
         deposits[signer] -= _amount;
-        
-        (bool success, ) = msg.sender.call{value: _amount}("");
+
+        // 转账给签名者而不是 msg.sender
+        (bool success, ) = signer.call{value: _amount}("");
         require(success, "Transfer failed");
-        
+
         emit Withdrawal(signer, _amount);
     }
     
@@ -275,11 +280,14 @@ contract AuditedVault {
     
     function splitSignature(bytes memory sig) public pure returns (bytes32 r, bytes32 s, uint8 v) {
         require(sig.length == 65, "Invalid signature");
-        
+
         assembly {
-            r := mload(add(sig, 32))
-            s := mload(add(sig, 64))
-            v := byte(0, mload(add(sig, 96)))
+            // 在 Solidity 中，bytes memory 参数指向包含长度前缀的内存位置
+            // 内存布局：[长度 (32 字节)][数据 (65 字节)]
+            // 所以数据从 sig + 32 开始
+            r := mload(add(sig, 32))   // 字节 0-31 (数据偏移 0)
+            s := mload(add(sig, 64))   // 字节 32-63 (数据偏移 32)
+            v := byte(0, mload(add(sig, 96)))  // 字节 64 (数据偏移 64)
         }
     }
     
@@ -331,7 +339,9 @@ contract AuditedVault {
     // ✅ 设置取款限制
     function setWithdrawalLimit(uint256 _newLimit) public onlyOwner {
         require(_newLimit > 0, "Limit zero");
+        uint256 oldLimit = withdrawalLimit;
         withdrawalLimit = _newLimit;
+        emit WithdrawalLimitUpdated(oldLimit, _newLimit);
     }
     
     // ✅ 查询函数

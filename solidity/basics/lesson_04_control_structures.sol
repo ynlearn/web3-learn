@@ -115,7 +115,7 @@ contract ControlStructures {
     }
     
     /**
-     * @note 循环中的 continue
+     * @dev 循环中的 continue，跳过奇数
      */
     function sumEvenNumbers(uint256[] memory _array) public pure returns (uint256) {
         uint256 sum = 0;
@@ -163,11 +163,11 @@ contract ControlStructures {
      * @notice Do-while 循环
      */
     function processAtLeastOnce(uint256 _target) public pure returns (uint256 iterations) {
-        uint256 counter = 0;
+        uint256 count = 0;
         do {
-            counter++;
-        } while (counter < _target);
-        return counter;
+            count++;
+        } while (count < _target);
+        return count;
     }
     
     // ==================== For vs While 对比 ====================
@@ -261,7 +261,7 @@ contract ControlStructures {
         _;
     }
     
-    function sensitiveAction() public onlyOwner whenNotPaused returns (string memory) {
+    function sensitiveAction() public view onlyOwner whenNotPaused returns (string memory) {
         return "Action executed successfully";
     }
     

@@ -533,16 +533,16 @@ contract VotingTimelock {
 
         require(proposals[proposalId].startTime == 0, "Proposal exists");
 
-        proposals[proposalId] = Proposal({
-            proposer: msg.sender,
-            descriptionHash: descriptionHash,
-            forVotes: 0,
-            againstVotes: 0,
-            startTime: block.timestamp,
-            endTime: block.timestamp + votingDelay,
-            executeAfter: block.timestamp + votingDelay + executionDelay,
-            executed: false
-        });
+        // 逐个赋值，因为结构体包含 mapping
+        proposals[proposalId].proposer = msg.sender;
+        proposals[proposalId].descriptionHash = descriptionHash;
+        proposals[proposalId].forVotes = 0;
+        proposals[proposalId].againstVotes = 0;
+        proposals[proposalId].startTime = block.timestamp;
+        proposals[proposalId].endTime = block.timestamp + votingDelay;
+        proposals[proposalId].executeAfter = block.timestamp + votingDelay + executionDelay;
+        proposals[proposalId].executed = false;
+        // mapping(address => bool) hasVoted 会自动初始化为默认值
 
         proposalIds.push(proposalId);
 

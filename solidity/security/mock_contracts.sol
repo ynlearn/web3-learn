@@ -17,9 +17,6 @@ contract MockSecureOracle {
     }
 }
 
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
 /**
  * @title MockRandomGenerator
  * @dev 模拟随机数生成器(用于测试)

@@ -212,15 +212,15 @@ abstract contract Shape {
     }
     
     // 虚拟函数：子合约可以重写
-    function area() public virtual pure returns (uint256) {
+    function area() public virtual view returns (uint256) {
+        return 0;
+    }
+
+    function perimeter() public virtual view returns (uint256) {
         return 0;
     }
     
-    function perimeter() public virtual pure returns (uint256) {
-        return 0;
-    }
-    
-    function getDescription() public pure returns (string memory) {
+    function getDescription() public virtual pure returns (string memory) {
         return "This is a shape";
     }
 }
@@ -237,11 +237,11 @@ contract Rectangle is Shape {
         length = _length;
     }
     
-    function area() public override pure returns (uint256) {
+    function area() public override view returns (uint256) {
         return width * length;
     }
-    
-    function perimeter() public override pure returns (uint256) {
+
+    function perimeter() public override view returns (uint256) {
         return 2 * (width + length);
     }
     
@@ -260,11 +260,11 @@ contract Square is Shape {
         side = _side;
     }
     
-    function area() public override pure returns (uint256) {
+    function area() public override view returns (uint256) {
         return side * side;
     }
-    
-    function perimeter() public override pure returns (uint256) {
+
+    function perimeter() public override view returns (uint256) {
         return 4 * side;
     }
     
@@ -406,7 +406,7 @@ contract Ownable {
         owner = msg.sender;
     }
     
-    modifier onlyOwner() {
+    modifier onlyOwner() virtual {
         require(msg.sender == owner, "Not owner");
         _;
     }
@@ -465,7 +465,7 @@ contract MultisigWallet is Ownable, Pausable {
     event Confirmation(address indexed sender, uint256 indexed transactionId);
     event Execution(uint256 indexed transactionId);
     
-    modifier onlyOwner() {
+    modifier onlyOwner() override {
         require(isOwner[msg.sender], "Not owner");
         _;
     }

@@ -3,8 +3,9 @@
  * 测试收益聚合器的核心功能
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("📘 Lesson 19: 收益聚合器", function () {
     let vault, strategy, token;
@@ -109,7 +110,7 @@ describe("📘 Lesson 19: 收益聚合器", function () {
             await vault.harvest();
 
             const sharePriceAfter = await vault.sharePrice();
-            expect(sharePriceAfter).to.be.gt(ethers.parseEther("1"));
+            expect(sharePriceAfter).to.be.greaterThan(ethers.parseEther("1"));
 
             // 第二次存款应该获得更少的份额（因为价格上涨）
             await vault.connect(user2).deposit(ethers.parseEther("1000"));
@@ -155,7 +156,7 @@ describe("📘 Lesson 19: 收益聚合器", function () {
             await vault.harvest();
 
             const sharePrice = await vault.sharePrice();
-            expect(sharePrice).to.be.gt(ethers.parseEther("1"));
+            expect(sharePrice).to.be.greaterThan(ethers.parseEther("1"));
 
             const withdrawShares = await vault.balanceOf(user1.address);
             const balanceBefore = await token.balanceOf(user1.address);
@@ -166,7 +167,7 @@ describe("📘 Lesson 19: 收益聚合器", function () {
             const received = balanceAfter - balanceBefore;
 
             // 应该收到原始存款 + 收益
-            expect(received).to.be.gt(ethers.parseEther("1000"));
+            expect(received).to.be.greaterThan(ethers.parseEther("1000"));
         });
 
         it("不能提取超过持有份额", async function () {
@@ -207,10 +208,10 @@ describe("📘 Lesson 19: 收益聚合器", function () {
             const sharePriceAfter = await vault.sharePrice();
 
             // 总资产应该增加
-            expect(totalAssetsAfter).to.be.gt(totalAssetsBefore);
+            expect(totalAssetsAfter).to.be.greaterThan(totalAssetsBefore);
 
             // 份额价格应该上涨
-            expect(sharePriceAfter).to.be.gt(sharePriceBefore);
+            expect(sharePriceAfter).to.be.greaterThan(sharePriceBefore);
 
             // 收获后资金应该重新存入策略
             expect(await token.balanceOf(await vault.getAddress())).to.be.lt(profit);
@@ -253,7 +254,7 @@ describe("📘 Lesson 19: 收益聚合器", function () {
 
             // 收益应该重新存入策略
             const balanceInStrategy = await strategy.totalAssets();
-            expect(balanceInStrategy).to.be.gt(ethers.parseEther("1000"));
+            expect(balanceInStrategy).to.be.greaterThan(ethers.parseEther("1000"));
         });
     });
 
@@ -294,7 +295,7 @@ describe("📘 Lesson 19: 收益聚合器", function () {
 
             const lastFeeTimeAfter = await vault.lastManagementFeeTime();
 
-            expect(lastFeeTimeAfter).to.be.gt(lastFeeTimeBefore);
+            expect(lastFeeTimeAfter).to.be.greaterThan(lastFeeTimeBefore);
         });
     });
 
@@ -554,57 +555,3 @@ describe("📘 Lesson 19: 收益聚合器", function () {
         });
     });
 });
-
-/**
- * 模拟策略合约（用于测试）
- */
-contract MockStrategy is IStrategy {
-    IERC20 public asset;
-    uint256 public profit;
-    address public vault;
-
-    constructor(address _asset) {
-        asset = IERC20(_asset);
-    }
-
-    function setVault(address _vault) external {
-        vault = _vault;
-    }
-
-    function setProfit(uint256 _profit) external {
-        profit = _profit;
-    }
-
-    function totalAssets() external view override returns (uint256) {
-        return asset.balanceOf(address(this));
-    }
-
-    function deposit(uint256 amount) external override returns (uint256) {
-        require(asset.transferFrom(msg.sender, address(this), amount), "Transfer failed");
-        return amount;
-    }
-
-    function withdraw(uint256 amount) external override returns (uint256) {
-        require(asset.transfer(msg.sender, amount), "Transfer failed");
-        return amount;
-    }
-
-    function harvest() external override returns (uint256) {
-        if (profit > 0) {
-            // 模拟收益：铸造额外的代币
-            require(asset.transfer(msg.sender, profit), "Transfer failed");
-            uint256 harvested = profit;
-            profit = 0;
-            return harvested;
-        }
-        return 0;
-    }
-
-    function exit(uint256 amount) external override {
-        withdraw(amount);
-    }
-
-    function getName() external pure override returns (string memory) {
-        return "Mock Strategy";
-    }
-}

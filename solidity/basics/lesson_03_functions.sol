@@ -60,7 +60,7 @@ contract Functions {
     /**
      * @notice 演示内部调用 external 函数
      */
-    function callExternalFunction() public pure returns (string memory) {
+    function callExternalFunction() public view returns (string memory) {
         // ❌ 不能直接调用 external 函数
         // return externalFunction();
         
@@ -122,7 +122,7 @@ contract Functions {
      */
     function getMultipleValues() public view returns (
         uint256 count,
-        string memory msg,
+        string memory messageText,
         address sender
     ) {
         return (counter, message, msg.sender);
@@ -146,7 +146,7 @@ contract Functions {
      */
     function returnStruct() public view returns (
         uint256 count,
-        string memory msg,
+        string memory messageText,
         bool isOwner
     ) {
         return (counter, message, msg.sender == owner);

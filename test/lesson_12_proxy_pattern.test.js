@@ -12,9 +12,10 @@
  * - 代理管理员
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
-const { keccak256 } = require("ethers");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
+const { keccak256 } = ethers;
 
 describe("代理模式合约测试", function () {
     // ==================== 透明代理测试 ====================
@@ -59,7 +60,7 @@ describe("代理模式合约测试", function () {
             });
 
             it("应该正确设置实现合约地址", async function () {
-                expect(await proxy.implementation()).to.equal(await logicV1.getAddress());
+                expect(await proxy.getImplementation()).to.equal(await logicV1.getAddress());
             });
 
             it("应该正确设置管理员", async function () {
@@ -112,7 +113,7 @@ describe("代理模式合约测试", function () {
             it("管理员应该能够升级代理", async function () {
                 await proxy.connect(admin).upgradeTo(await logicV2.getAddress());
 
-                expect(await proxy.implementation()).to.equal(await logicV2.getAddress());
+                expect(await proxy.getImplementation()).to.equal(await logicV2.getAddress());
             });
 
             it("非管理员不应该能够升级代理", async function () {
@@ -184,7 +185,7 @@ describe("代理模式合约测试", function () {
 
                 // 管理员调用应该被拒绝
                 await expect(
-                    proxy.connect(admin).setValue(200)
+                    proxyAsV1.connect(admin).setValue(200)
                 ).to.be.revertedWith("Proxy: admin cannot fallback to proxy");
             });
 
@@ -308,14 +309,20 @@ describe("代理模式合约测试", function () {
             it("升级并调用应该成功", async function () {
                 const proxyAsV1 = await ethers.getContractAt("CounterV1", await proxy.getAddress());
 
-                const initData = counterV2.interface.encodeFunctionData("initialize", []);
+                // 调用 increment 来测试状态保留
+                await proxyAsV1.increment();
+                expect(await proxyAsV1.count()).to.equal(1);
 
+                // 使用 upgradeToAndCall 升级并调用 increment (而不是 initialize，因为已经初始化过了)
+                const callData = counterV2.interface.encodeFunctionData("increment", []);
                 await proxyAsV1.upgradeToAndCall(
                     await counterV2.getAddress(),
-                    initData
+                    callData
                 );
 
                 const proxyAsV2 = await ethers.getContractAt("CounterV2", await proxy.getAddress());
+                // count 应该是 2 (之前 increment 1 次，upgradeToAndCall 时又 increment 1 次)
+                expect(await proxyAsV2.count()).to.equal(2);
                 expect(await proxyAsV2.owner()).to.equal(owner.address);
             });
         });
@@ -518,7 +525,7 @@ describe("代理模式合约测试", function () {
                     await logicV2.getAddress()
                 );
 
-                expect(await proxy.implementation()).to.equal(await logicV2.getAddress());
+                expect(await proxy.getImplementation()).to.equal(await logicV2.getAddress());
             });
 
             it("应该能够升级并调用", async function () {

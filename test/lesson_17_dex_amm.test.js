@@ -3,8 +3,9 @@
  * 测试 AMM 自动做市商合约的核心功能
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("📘 Lesson 17: AMM 自动做市商", function () {
     let token0, token1, pair;
@@ -265,7 +266,7 @@ describe("📘 Lesson 17: AMM 自动做市商", function () {
             const kAfter = reserve0After * reserve1After;
 
             // k 应该增加（因为收取了手续费）
-            expect(kAfter).to.be.gt(kBefore);
+            expect(kAfter).to.be.greaterThan(kBefore);
         });
 
         it("滑点保护应该生效", async function () {
@@ -454,8 +455,8 @@ describe("📘 Lesson 17: AMM 自动做市商", function () {
             );
 
             // 验证两个用户都有 LP 代币
-            expect(await pair.balanceOf(user1.address)).to.be.gt(0);
-            expect(await pair.balanceOf(user2.address)).to.be.gt(0);
+            expect(await pair.balanceOf(user1.address)).to.be.greaterThan(0);
+            expect(await pair.balanceOf(user2.address)).to.be.greaterThan(0);
 
             // 验证总供应量正确
             const totalSupply = await pair.totalSupply();
@@ -508,7 +509,7 @@ describe("📘 Lesson 17: AMM 自动做市商", function () {
             const [amount0, amount1] = await pair.getLiquidityValue(liquidity);
 
             // 由于手续费，k 值增加，所以赎回的代币价值应该略高于存入时
-            expect(amount0).to.be.gt(ethers.parseEther("1000"));
+            expect(amount0).to.be.greaterThan(initialAmount0);
         });
     });
 });

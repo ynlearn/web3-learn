@@ -1,5 +1,6 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("Lesson 09: 事件与日志", function () {
     let eventContract, nftContract, defiContract;
@@ -10,20 +11,20 @@ describe("Lesson 09: 事件与日志", function () {
 
         const EventContract = await ethers.getContractFactory("EventContract");
         eventContract = await EventContract.deploy();
-        await eventContract.deployed();
+        await eventContract.waitForDeployment();
 
         const NFTContract = await ethers.getContractFactory("NFTContract");
         nftContract = await NFTContract.deploy();
-        await nftContract.deployed();
+        await nftContract.waitForDeployment();
 
         const DeFiProtocol = await ethers.getContractFactory("DeFiProtocol");
         defiContract = await DeFiProtocol.deploy();
-        await defiContract.deployed();
+        await defiContract.waitForDeployment();
     });
 
     describe("基础事件测试", function () {
         it("应该触发存款事件", async function () {
-            const depositAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("1.0");
 
             await expect(
                 eventContract.connect(user1).deposit("Test deposit", { value: depositAmount })
@@ -33,10 +34,10 @@ describe("Lesson 09: 事件与日志", function () {
         });
 
         it("应该触发转账事件", async function () {
-            const depositAmount = ethers.utils.parseEther("2.0");
+            const depositAmount = ethers.parseEther("2.0");
             await eventContract.connect(user1).deposit("Initial deposit", { value: depositAmount });
 
-            const transferAmount = ethers.utils.parseEther("1.0");
+            const transferAmount = ethers.parseEther("1.0");
 
             await expect(
                 eventContract.connect(user1).transfer(user2.address, transferAmount)
@@ -46,13 +47,13 @@ describe("Lesson 09: 事件与日志", function () {
         });
 
         it("应该触发批量转账事件", async function () {
-            const depositAmount = ethers.utils.parseEther("10.0");
+            const depositAmount = ethers.parseEther("10.0");
             await eventContract.connect(user1).deposit("Batch deposit", { value: depositAmount });
 
             const recipients = [user2.address, owner.address];
             const amounts = [
-                ethers.utils.parseEther("3.0"),
-                ethers.utils.parseEther("2.0")
+                ethers.parseEther("3.0"),
+                ethers.parseEther("2.0")
             ];
 
             await expect(
@@ -63,7 +64,7 @@ describe("Lesson 09: 事件与日志", function () {
                     user1.address,
                     recipients,
                     amounts,
-                    ethers.utils.parseEther("5.0")
+                    ethers.parseEther("5.0")
                 );
         });
 
@@ -97,7 +98,7 @@ describe("Lesson 09: 事件与日志", function () {
     describe("错误事件测试", function () {
         it("应该触发错误事件（无效参数）", async function () {
             await expect(
-                eventContract.connect(user1).conditionalTransfer(address(0), ethers.utils.parseEther("1.0"), 0)
+                eventContract.connect(user1).conditionalTransfer(address(0), ethers.parseEther("1.0"), 0)
             )
                 .to.emit(eventContract, "ErrorOccurred")
                 .withArgs(user1.address, "Invalid transfer parameters", 400);
@@ -105,7 +106,7 @@ describe("Lesson 09: 事件与日志", function () {
 
         it("应该触发错误事件（余额不足）", async function () {
             await expect(
-                eventContract.connect(user1).conditionalTransfer(user2.address, ethers.utils.parseEther("1.0"), 0)
+                eventContract.connect(user1).conditionalTransfer(user2.address, ethers.parseEther("1.0"), 0)
             )
                 .to.emit(eventContract, "ErrorOccurred")
                 .withArgs(user1.address, "Insufficient balance", 401);
@@ -151,8 +152,8 @@ describe("Lesson 09: 事件与日志", function () {
     describe("DeFi 事件测试", function () {
         it("应该触发添加流动性事件", async function () {
             const poolAddress = user2.address;
-            const amountA = ethers.utils.parseEther("10.0");
-            const amountB = ethers.utils.parseEther("20.0");
+            const amountA = ethers.parseEther("10.0");
+            const amountB = ethers.parseEther("20.0");
 
             await expect(
                 defiContract.connect(user1).addLiquidity(poolAddress, amountA, amountB)
@@ -163,7 +164,7 @@ describe("Lesson 09: 事件与日志", function () {
                     poolAddress,
                     amountA,
                     amountB,
-                    amountA.add(amountB)
+                    (amountA + amountB)
                 );
         });
 
@@ -171,7 +172,7 @@ describe("Lesson 09: 事件与日志", function () {
             const poolAddress = user2.address;
             const tokenIn = owner.address;
             const tokenOut = user1.address;
-            const amountIn = ethers.utils.parseEther("10.0");
+            const amountIn = ethers.parseEther("10.0");
 
             await expect(
                 defiContract.connect(user1).swap(poolAddress, tokenIn, tokenOut, amountIn)
@@ -183,7 +184,7 @@ describe("Lesson 09: 事件与日志", function () {
                     tokenIn,
                     tokenOut,
                     amountIn,
-                    amountIn.mul(95).div(100)
+                    (amountIn * 95).div(100)
                 );
         });
     });
@@ -191,9 +192,9 @@ describe("Lesson 09: 事件与日志", function () {
     describe("事件监听测试", function () {
         it("应该能查询历史事件", async function () {
             // 执行多个操作
-            await eventContract.connect(user1).deposit("First", { value: ethers.utils.parseEther("1.0") });
-            await eventContract.connect(user2).deposit("Second", { value: ethers.utils.parseEther("2.0") });
-            await eventContract.connect(user1).deposit("Third", { value: ethers.utils.parseEther("1.5") });
+            await eventContract.connect(user1).deposit("First", { value: ethers.parseEther("1.0") });
+            await eventContract.connect(user2).deposit("Second", { value: ethers.parseEther("2.0") });
+            await eventContract.connect(user1).deposit("Third", { value: ethers.parseEther("1.5") });
 
             // 查询所有 Deposit 事件
             const depositFilter = eventContract.filters.Deposit();
@@ -206,8 +207,8 @@ describe("Lesson 09: 事件与日志", function () {
         });
 
         it("应该能按地址过滤事件", async function () {
-            await eventContract.connect(user1).deposit("User1 deposit", { value: ethers.utils.parseEther("1.0") });
-            await eventContract.connect(user2).deposit("User2 deposit", { value: ethers.utils.parseEther("2.0") });
+            await eventContract.connect(user1).deposit("User1 deposit", { value: ethers.parseEther("1.0") });
+            await eventContract.connect(user2).deposit("User2 deposit", { value: ethers.parseEther("2.0") });
 
             // 只查询 user1 的存款
             const filter = eventContract.filters.Deposit(user1.address);
@@ -228,8 +229,8 @@ describe("Lesson 09: 事件与日志", function () {
             });
 
             // 执行转账
-            await eventContract.connect(user1).deposit("Deposit", { value: ethers.utils.parseEther("2.0") });
-            await eventContract.connect(user1).transfer(user2.address, ethers.utils.parseEther("1.0"));
+            await eventContract.connect(user1).deposit("Deposit", { value: ethers.parseEther("2.0") });
+            await eventContract.connect(user1).transfer(user2.address, ethers.parseEther("1.0"));
 
             // 等待事件被捕获
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -243,11 +244,11 @@ describe("Lesson 09: 事件与日志", function () {
 
     describe("Gas 优化测试", function () {
         it("批量操作应该节省 Gas", async function () {
-            const depositAmount = ethers.utils.parseEther("50.0");
+            const depositAmount = ethers.parseEther("50.0");
             await eventContract.connect(user1).deposit("Large deposit", { value: depositAmount });
 
             const recipients = new Array(10).fill(user2.address);
-            const amounts = new Array(10).fill(ethers.utils.parseEther("1.0"));
+            const amounts = new Array(10).fill(ethers.parseEther("1.0"));
 
             // 测试批量转账
             const tx = await eventContract.connect(user1).batchTransfer(recipients, amounts);
@@ -262,22 +263,22 @@ describe("Lesson 09: 事件与日志", function () {
 
     describe("复杂事件测试", function () {
         it("应该触发状态变更事件", async function () {
-            const key = ethers.utils.formatBytes32String("testKey");
-            const newValue = ethers.utils.formatBytes32String("testValue");
+            const key = ethers.formatBytes32String("testKey");
+            const newValue = ethers.formatBytes32String("testValue");
 
             await expect(
                 eventContract.connect(owner).updateState(key, newValue)
             )
                 .to.emit(eventContract, "StateChanged")
-                .withArgs(key, ethers.utils.formatBytes32String(""), newValue);
+                .withArgs(key, ethers.formatBytes32String(""), newValue);
         });
 
         it("应该触发复杂操作事件", async function () {
             await expect(
                 eventContract.connect(owner).complexOperation(
                     user1.address,
-                    ethers.utils.parseEther("1.0"),
-                    ethers.utils.parseEther("2.0"),
+                    ethers.parseEther("1.0"),
+                    ethers.parseEther("2.0"),
                     "Test operation"
                 )
             )
@@ -288,7 +289,7 @@ describe("Lesson 09: 事件与日志", function () {
 
     describe("Receive/Fallback 事件测试", function () {
         it("应该通过 receive 函数触发存款事件", async function () {
-            const amount = ethers.utils.parseEther("1.5");
+            const amount = ethers.parseEther("1.5");
 
             await expect(
                 user1.sendTransaction({ to: eventContract.address, value: amount })

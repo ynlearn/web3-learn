@@ -8,20 +8,17 @@ pragma solidity ^0.8.20;
  */
 
 /**
- * @title InsufficientBalanceError
  * @dev 自定义错误：余额不足
  * @notice 自定义错误比字符串错误信息更节省 Gas
  */
 error InsufficientBalanceError(uint256 requested, uint256 available);
 
 /**
- * @title OnlyOwnerError
  * @dev 自定义错误：非所有者
  */
 error OnlyOwnerError(address caller, address owner);
 
 /**
- * @title InvalidValueError
  * @dev 自定义错误：无效值
  */
 error InvalidValueError(uint256 value);
@@ -274,7 +271,7 @@ contract BankContract {
      * @dev 仅所有者函数（使用自定义错误）
      * @notice 自定义错误可以携带更多信息
      */
-    function ownerFunction() public {
+    function ownerFunction() public view {
         if (msg.sender != owner) {
             revert OnlyOwnerError(msg.sender, owner);
         }

@@ -14,8 +14,9 @@
  * - 模式组合
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("常用模式合约测试", function () {
     // ==================== 所有权模式测试 ====================

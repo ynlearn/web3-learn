@@ -1,9 +1,13 @@
-require("@nomicfoundation/hardhat-toolbox");
-require("hardhat-gas-reporter");
-require("solidity-coverage");
+import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
 
-/** @type import('hardhat/config').HardhatUserConfig */
-module.exports = {
+/**
+ * Hardhat 配置文件
+ *
+ * Web3 & Solidity 教学示范项目的开发环境配置
+ */
+export default {
   solidity: {
     version: "0.8.20",
     settings: {
@@ -42,8 +46,8 @@ module.exports = {
     showTimeSpent: true,
   },
   paths: {
-    sources: "./",
-    tests: "./",
+    sources: "./solidity",
+    tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
   },

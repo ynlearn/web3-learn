@@ -3,9 +3,10 @@
  * 测试 DAO 治理系统的核心功能
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
-const { time } = require("@nomicfoundation/hardhat-network-helpers");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("📘 Lesson 20: DAO 治理系统", function () {
     let daoFactory, governor, timelock, token;
@@ -16,7 +17,7 @@ describe("📘 Lesson 20: DAO 治理系统", function () {
         [owner, voter1, voter2, voter3, proposer] = await ethers.getSigners();
 
         // 部署 DAO 工厂
-        const DAOFactory = await ethers.getContractFactory("DAOFactory");
+        const DAOFactory = await ethers.getContractFactory("defi/lesson_20_dao_governance.sol:DAOFactory");
         daoFactory = await DAOFactory.deploy();
 
         // 创建 DAO 配置
@@ -373,7 +374,7 @@ describe("📘 Lesson 20: DAO 治理系统", function () {
             const threshold = await governor.proposalThreshold();
 
             // 默认阈值通常是总供应量的某个百分比
-            expect(threshold).to.be.gt(0);
+            expect(threshold).to.be.greaterThan(0);
         });
     });
 

@@ -167,7 +167,7 @@ contract Pausable {
     /**
      * @dev 暂停合约
      */
-    function pause() external virtual whenNotPaused {
+    function pause() public virtual whenNotPaused {
         paused = true;
         emit Paused(msg.sender);
     }
@@ -175,7 +175,7 @@ contract Pausable {
     /**
      * @dev 恢复合约
      */
-    function unpause() external virtual whenPaused {
+    function unpause() public virtual whenPaused {
         paused = false;
         emit Unpaused(msg.sender);
     }
@@ -247,14 +247,14 @@ contract PausableToken is Pausable, Ownable {
     /**
      * @dev 只有所有者可以暂停
      */
-    function pause() external override onlyOwner whenNotPaused {
+    function pause() public override onlyOwner whenNotPaused {
         super.pause();
     }
 
     /**
      * @dev 只有所有者可以恢复
      */
-    function unpause() external override onlyOwner whenPaused {
+    function unpause() public override onlyOwner whenPaused {
         super.unpause();
     }
 }
@@ -765,7 +765,7 @@ contract RateLimiter {
         bytes32 limitId,
         uint256 maxCalls,
         uint256 window
-    ) external {
+    ) public {
         limits[limitId].maxCalls = maxCalls;
         limits[limitId].window = window;
         emit LimitSet(limitId, maxCalls, window);
@@ -986,14 +986,14 @@ contract RobustToken is
     /**
      * @dev 暂停（只有所有者）
      */
-    function pause() external override onlyOwner whenNotPaused {
+    function pause() public override onlyOwner whenNotPaused {
         super.pause();
     }
 
     /**
      * @dev 恢复（只有所有者）
      */
-    function unpause() external override onlyOwner whenPaused {
+    function unpause() public override onlyOwner whenPaused {
         super.unpause();
     }
 }

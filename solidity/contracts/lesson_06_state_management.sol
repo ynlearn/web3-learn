@@ -289,11 +289,7 @@ contract StateManagement {
      * @notice 演示常量和不可变变量
      */
     uint256 public constant CONSTANT_VALUE = 1000;
-    address public immutable IMMUTABLE_OWNER;
-    
-    constructor() {
-        IMMUTABLE_OWNER = msg.sender;
-    }
+    address public immutable IMMUTABLE_OWNER = msg.sender;
     
     /**
      * @notice 演示删除操作

@@ -12,9 +12,10 @@
  * - 边界条件
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
-const { time } = require("@nomicfoundation/hardhat-network-helpers");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("时间锁模式合约测试", function () {
     // ==================== 基础时间锁测试 ====================

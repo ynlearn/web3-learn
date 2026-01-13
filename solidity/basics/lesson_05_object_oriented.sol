@@ -337,13 +337,13 @@ contract SafeCalculator {
  * @dev 基础合约
  */
 contract BaseContract {
-    string public name = "Base";
-    
+    string public contractName = "Base";
+
     function getValue() public pure virtual returns (uint256) {
         return 100;
     }
-    
-    function getDescription() public pure returns (string memory) {
+
+    function getDescription() public pure virtual returns (string memory) {
         return "This is the base contract";
     }
 }
@@ -353,16 +353,20 @@ contract BaseContract {
  * @dev 派生合约
  */
 contract DerivedContract is BaseContract {
-    string public name = "Derived"; // 覆盖状态变量
-    
+    // Solidity 不支持覆盖 public 状态变量
+    // 通过函数来获取派生类的名称
+    function getDerivedName() public pure returns (string memory) {
+        return "Derived";
+    }
+
     function getValue() public pure override returns (uint256) {
         return 200; // 覆盖函数
     }
-    
+
     function getDescription() public pure override returns (string memory) {
         return "This is the derived contract";
     }
-    
+
     function getBaseValue() public pure returns (uint256) {
         return BaseContract.getValue(); // 调用父合约函数
     }

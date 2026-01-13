@@ -11,9 +11,12 @@
  * - Gas 成本对比
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
-const { keccak256, defaultAbiCoder } = require("ethers");
+import { expect } from "chai";
+import hre from "hardhat";
+import { AbiCoder } from "ethers";
+const { ethers } = hre;
+const { keccak256 } = ethers;
+const defaultAbiCoder = AbiCoder.defaultAbiCoder;
 
 describe("工厂模式合约测试", function () {
     // ==================== 基础工厂测试 ====================
@@ -194,7 +197,7 @@ describe("工厂模式合约测试", function () {
                 // 获取 DeterministicContract 的字节码
                 const DeterministicContract = await ethers.getContractFactory("DeterministicContract");
                 bytecode = DeterministicContract.bytecode;
-                salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+                salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
             });
 
             it("应该成功部署合约", async function () {
@@ -250,7 +253,7 @@ describe("工厂模式合约测试", function () {
                     [bytecode, 100]
                 );
 
-                const salt2 = keccak256(defaultAbiCoder.encode(["uint256"], [54321]));
+                const salt2 = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [54321]));
 
                 const tx1 = await factory.deploy(bytecodeWithArgs, salt);
                 const receipt1 = await tx1.wait();
@@ -292,7 +295,7 @@ describe("工厂模式合约测试", function () {
                     ["bytes", "uint256"],
                     [bytecode, value]
                 );
-                const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+                const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
                 const predictedAddress = await factory.getAddress(
                     await factory.getAddress(),
@@ -327,7 +330,7 @@ describe("工厂模式合约测试", function () {
         describe("确定性部署", function () {
             it("应该成功部署合约", async function () {
                 const value = 100;
-                const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+                const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
                 const address = await factory.deployDeterministic(value, salt);
 
@@ -337,7 +340,7 @@ describe("工厂模式合约测试", function () {
 
             it("应该记录部署地址", async function () {
                 const value = 100;
-                const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+                const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
                 await factory.deployDeterministic(value, salt);
 
@@ -347,7 +350,7 @@ describe("工厂模式合约测试", function () {
 
             it("应该正确预测地址", async function () {
                 const value = 100;
-                const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+                const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
                 const predictedAddress = await factory.predictAddress(value, salt);
                 const actualAddress = await factory.deployDeterministic(value, salt);
@@ -357,7 +360,7 @@ describe("工厂模式合约测试", function () {
 
             it("应该拒绝重复的 salt", async function () {
                 const value = 100;
-                const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+                const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
                 await factory.deployDeterministic(value, salt);
 
@@ -608,7 +611,7 @@ describe("工厂模式合约测试", function () {
                 ["bytes", "uint256"],
                 [bytecode, 100]
             );
-            const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+            const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
             const tx = await factory.deploy(bytecodeWithArgs, salt);
             const receipt = await tx.wait();
@@ -652,7 +655,7 @@ describe("工厂模式合约测试", function () {
                 ["bytes", "uint256"],
                 [bytecode, 100]
             );
-            const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+            const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
             const tx2 = await factory2.deploy(bytecodeWithArgs, salt);
             const receipt2 = await tx2.wait();
@@ -675,7 +678,7 @@ describe("工厂模式合约测试", function () {
             console.log(`CREATE:     ${createGas.toString()}`);
             console.log(`CREATE2:    ${create2Gas.toString()}`);
             console.log(`Clone:      ${cloneGas.toString()}`);
-            console.log(`==================================");
+            console.log(`==================================`);
 
             // Clone 应该是最便宜的
             expect(cloneGas).to.be.lt(createGas);
@@ -698,7 +701,7 @@ describe("工厂模式合约测试", function () {
 
         describe("部署方式对比", function () {
             it("应该能够使用 CREATE 部署", async function () {
-                const address = await comparison.createWithCreate();
+                const address = await comparison.createWithCreate.staticCall();
                 expect(address).to.be.properAddress;
             });
 
@@ -709,9 +712,9 @@ describe("工厂模式合约测试", function () {
                     ["bytes", "uint256", "string"],
                     [bytecode, 1, "Product"]
                 );
-                const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+                const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
-                const address = await comparison.createWithCREATE2(bytecodeWithArgs, salt);
+                const address = await comparison.createWithCREATE2.staticCall(bytecodeWithArgs, salt);
                 expect(address).to.be.properAddress;
             });
 
@@ -720,7 +723,7 @@ describe("工厂模式合约测试", function () {
                 const implementation = await CloneImplementation.deploy();
                 await implementation.waitForDeployment();
 
-                const address = await comparison.createWithClone(await implementation.getAddress());
+                const address = await comparison.createWithClone.staticCall(await implementation.getAddress());
                 expect(address).to.be.properAddress;
             });
         });
@@ -733,7 +736,7 @@ describe("工厂模式合约测试", function () {
                     ["bytes", "uint256", "string"],
                     [bytecode, 1, "Product"]
                 );
-                const salt = keccak256(defaultAbiCoder.encode(["uint256"], [12345]));
+                const salt = keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [12345]));
 
                 const CloneImplementation = await ethers.getContractFactory("CloneImplementation");
                 const implementation = await CloneImplementation.deploy();

@@ -19,19 +19,31 @@ library StorageSlot {
     bytes32 internal constant ADMIN_SLOT = bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1);
     bytes32 internal constant BEACON_SLOT = bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1);
 
-    function getAddressSlot(bytes32 slot) internal pure returns (address storage result) {
+    struct AddressSlot {
+        address value;
+    }
+
+    struct BooleanSlot {
+        bool value;
+    }
+
+    struct Bytes32Slot {
+        bytes32 value;
+    }
+
+    function getAddressSlot(bytes32 slot) internal pure returns (AddressSlot storage result) {
         assembly {
             result.slot := slot
         }
     }
 
-    function getBooleanSlot(bytes32 slot) internal pure returns (bool storage result) {
+    function getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage result) {
         assembly {
             result.slot := slot
         }
     }
 
-    function getBytes32Slot(bytes32 slot) internal pure returns (bytes32 storage result) {
+    function getBytes32Slot(bytes32 slot) internal pure returns (Bytes32Slot storage result) {
         assembly {
             result.slot := slot
         }
@@ -147,7 +159,7 @@ contract TransparentUpgradeableProxy {
     /**
      * @dev 获取实现合约地址
      */
-    function implementation() external view returns (address) {
+    function getImplementation() external view returns (address) {
         return _getImplementation();
     }
 
@@ -369,7 +381,8 @@ contract BeaconProxy {
         _setBeacon(beacon);
 
         if (data.length > 0) {
-            _delegate(_getImplementation());
+            (bool success, ) = _getImplementation().delegatecall(data);
+            require(success, "Initialization failed");
         }
     }
 
@@ -436,7 +449,14 @@ contract UpgradeableBeacon {
         emit Upgraded(_implementation);
     }
 
-    function implementation() external view returns (address) {
+    function transferOwnership(address newOwner) external {
+        require(msg.sender == owner, "Only owner");
+        require(newOwner != address(0), "New owner is zero");
+
+        owner = newOwner;
+    }
+
+    function getImplementation() external view returns (address) {
         return implementation;
     }
 }
@@ -519,7 +539,7 @@ contract ProxyAdmin {
      * @dev 升级透明代理
      */
     function upgrade(address proxy, address implementation) external onlyOwner {
-        TransparentUpgradeableProxy(proxy).upgradeTo(implementation);
+        TransparentUpgradeableProxy(payable(proxy)).upgradeTo(implementation);
     }
 
     /**
@@ -530,21 +550,21 @@ contract ProxyAdmin {
         address implementation,
         bytes memory data
     ) external onlyOwner {
-        TransparentUpgradeableProxy(proxy).upgradeToAndCall(implementation, data);
+        TransparentUpgradeableProxy(payable(proxy)).upgradeToAndCall(implementation, data);
     }
 
     /**
      * @dev 更改代理管理员
      */
     function changeProxyAdmin(address proxy, address newAdmin) external onlyOwner {
-        TransparentUpgradeableProxy(proxy).changeAdmin(newAdmin);
+        TransparentUpgradeableProxy(payable(proxy)).changeAdmin(newAdmin);
     }
 
     /**
      * @dev 升级信标
      */
     function upgradeBeacon(address beacon, address implementation) external onlyOwner {
-        UpgradeableBeacon(beacon).upgrade(implementation);
+        UpgradeableBeacon(payable(beacon)).upgrade(implementation);
     }
 }
 

@@ -1,5 +1,6 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("Lesson 10: 安全机制基础", function () {
     let ownable, accessControl, secureBank, vulnerableBank, attacker, pausableToken, vault;
@@ -11,36 +12,36 @@ describe("Lesson 10: 安全机制基础", function () {
         // 部署 Ownable
         const Ownable = await ethers.getContractFactory("Ownable");
         ownable = await Ownable.deploy();
-        await ownable.deployed();
+        await ownable.waitForDeployment();
 
         // 部署 AccessControl
         const AccessControl = await ethers.getContractFactory("AccessControl");
         accessControl = await AccessControl.deploy();
-        await accessControl.deployed();
+        await accessControl.waitForDeployment();
 
         // 部署银行合约
         const SecureBank = await ethers.getContractFactory("SecureBank");
         secureBank = await SecureBank.deploy();
-        await secureBank.deployed();
+        await secureBank.waitForDeployment();
 
         const VulnerableBank = await ethers.getContractFactory("VulnerableBank");
         vulnerableBank = await VulnerableBank.deploy();
-        await vulnerableBank.deployed();
+        await vulnerableBank.waitForDeployment();
 
         // 部署攻击合约
         const Attacker = await ethers.getContractFactory("Attacker");
         attacker = await Attacker.deploy(secureBank.address, vulnerableBank.address);
-        await attacker.deployed();
+        await attacker.waitForDeployment();
 
         // 部署可暂停代币
         const PausableToken = await ethers.getContractFactory("PausableToken");
-        pausableToken = await PausableToken.deploy(ethers.utils.parseEther("1000"));
-        await pausableToken.deployed();
+        pausableToken = await PausableToken.deploy(ethers.parseEther("1000"));
+        await pausableToken.waitForDeployment();
 
         // 部署安全金库
         const SecureVault = await ethers.getContractFactory("SecureVault");
-        vault = await SecureVault.deploy(ethers.utils.parseEther("10"));
-        await vault.deployed();
+        vault = await SecureVault.deploy(ethers.parseEther("10"));
+        await vault.waitForDeployment();
     });
 
     describe("Ownable 测试", function () {
@@ -64,7 +65,7 @@ describe("Lesson 10: 安全机制基础", function () {
 
         it("应该能放弃所有权", async function () {
             await ownable.renounceOwnership();
-            expect(await ownable.owner()).to.equal(ethers.constants.AddressZero);
+            expect(await ownable.owner()).to.equal(ethers.ZeroAddress);
         });
 
         it("应该触发所有权转移事件", async function () {
@@ -117,18 +118,18 @@ describe("Lesson 10: 安全机制基础", function () {
 
     describe("防重入攻击测试", function () {
         it("安全银行应该能正常存款和取款", async function () {
-            const depositAmount = ethers.utils.parseEther("5.0");
-            const withdrawAmount = ethers.utils.parseEther("2.0");
+            const depositAmount = ethers.parseEther("5.0");
+            const withdrawAmount = ethers.parseEther("2.0");
 
             await secureBank.connect(user1).deposit({ value: depositAmount });
             expect(await secureBank.balances(user1.address)).to.equal(depositAmount);
 
             await secureBank.connect(user1).withdraw(withdrawAmount);
-            expect(await secureBank.balances(user1.address)).to.equal(depositAmount.sub(withdrawAmount));
+            expect(await secureBank.balances(user1.address)).to.equal((depositAmount - withdrawAmount));
         });
 
         it("安全银行应该防止重入攻击", async function () {
-            const attackAmount = ethers.utils.parseEther("1.0");
+            const attackAmount = ethers.parseEther("1.0");
 
             // 攻击者存款
             await attacker.attackSecure(attackAmount, { value: attackAmount });
@@ -140,7 +141,7 @@ describe("Lesson 10: 安全机制基础", function () {
         });
 
         it("有漏洞的银行应该容易受到重入攻击", async function () {
-            const attackAmount = ethers.utils.parseEther("10.0");
+            const attackAmount = ethers.parseEther("10.0");
 
             // 攻击者存款
             await attacker.connect(user1).attack(attackAmount, { value: attackAmount });
@@ -155,24 +156,24 @@ describe("Lesson 10: 安全机制基础", function () {
         });
 
         it("批量取款应该安全执行", async function () {
-            const depositAmount = ethers.utils.parseEther("20.0");
+            const depositAmount = ethers.parseEther("20.0");
             await secureBank.connect(user1).deposit({ value: depositAmount });
 
             const amounts = [
-                ethers.utils.parseEther("1.0"),
-                ethers.utils.parseEther("2.0"),
-                ethers.utils.parseEther("3.0")
+                ethers.parseEther("1.0"),
+                ethers.parseEther("2.0"),
+                ethers.parseEther("3.0")
             ];
 
             await secureBank.connect(user1).batchWithdraw(amounts);
 
-            const remaining = ethers.utils.parseEther("14.0");
+            const remaining = ethers.parseEther("14.0");
             expect(await secureBank.balances(user1.address)).to.equal(remaining);
         });
 
         it("应该检测重入攻击尝试", async function () {
             // 这个测试需要特殊设置，简化处理
-            const depositAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("1.0");
             await secureBank.connect(user1).deposit({ value: depositAmount });
 
             // 正常取款应该成功
@@ -197,21 +198,21 @@ describe("Lesson 10: 安全机制基础", function () {
             await vault.pause();
 
             await expect(
-                vault.connect(user1).deposit({ value: ethers.utils.parseEther("1.0") })
+                vault.connect(user1).deposit({ value: ethers.parseEther("1.0") })
             ).to.be.revertedWith("Pausable: paused");
         });
 
         it("暂停后不能取款", async function () {
-            await vault.connect(user1).deposit({ value: ethers.utils.parseEther("5.0") });
+            await vault.connect(user1).deposit({ value: ethers.parseEther("5.0") });
             await vault.pause();
 
             await expect(
-                vault.connect(user1).withdraw(ethers.utils.parseEther("1.0"))
+                vault.connect(user1).withdraw(ethers.parseEther("1.0"))
             ).to.be.revertedWith("Pausable: paused");
         });
 
         it("暂停后可以紧急取款", async function () {
-            const depositAmount = ethers.utils.parseEther("5.0");
+            const depositAmount = ethers.parseEther("5.0");
             await vault.connect(user1).deposit({ value: depositAmount });
             await vault.pause();
 
@@ -238,29 +239,29 @@ describe("Lesson 10: 安全机制基础", function () {
 
     describe("安全金库综合测试", function () {
         it("应该正确执行存款和取款", async function () {
-            const depositAmount = ethers.utils.parseEther("15.0");
-            const withdrawAmount = ethers.utils.parseEther("5.0");
+            const depositAmount = ethers.parseEther("15.0");
+            const withdrawAmount = ethers.parseEther("5.0");
 
             await vault.connect(user1).deposit({ value: depositAmount });
             expect(await vault.deposits(user1.address)).to.equal(depositAmount);
 
             await vault.connect(user1).withdraw(withdrawAmount);
-            expect(await vault.deposits(user1.address)).to.equal(depositAmount.sub(withdrawAmount));
+            expect(await vault.deposits(user1.address)).to.equal((depositAmount - withdrawAmount));
         });
 
         it("应该强制执行取款限制", async function () {
-            const depositAmount = ethers.utils.parseEther("20.0");
+            const depositAmount = ethers.parseEther("20.0");
             await vault.connect(user1).deposit({ value: depositAmount });
 
             const withdrawalLimit = await vault.withdrawalLimit();
 
             await expect(
-                vault.connect(user1).withdraw(withdrawalLimit.add(1))
+                vault.connect(user1).withdraw((withdrawalLimit + 1))
             ).to.be.revertedWith("Amount exceeds withdrawal limit");
         });
 
         it("所有者应该能更新取款限制", async function () {
-            const newLimit = ethers.utils.parseEther("20.0");
+            const newLimit = ethers.parseEther("20.0");
 
             await expect(vault.setWithdrawalLimit(newLimit))
                 .to.emit(vault, "LimitUpdated");
@@ -270,19 +271,19 @@ describe("Lesson 10: 安全机制基础", function () {
 
         it("非所有者不能更新取款限制", async function () {
             await expect(
-                vault.connect(user1).setWithdrawalLimit(ethers.utils.parseEther("100.0"))
+                vault.connect(user1).setWithdrawalLimit(ethers.parseEther("100.0"))
             ).to.be.revertedWith("Ownable: caller is not the owner");
         });
 
         it("应该正确处理多个用户的存款", async function () {
-            await vault.connect(user1).deposit({ value: ethers.utils.parseEther("10.0") });
-            await vault.connect(user2).deposit({ value: ethers.utils.parseEther("20.0") });
-            await vault.connect(user3).deposit({ value: ethers.utils.parseEther("15.0") });
+            await vault.connect(user1).deposit({ value: ethers.parseEther("10.0") });
+            await vault.connect(user2).deposit({ value: ethers.parseEther("20.0") });
+            await vault.connect(user3).deposit({ value: ethers.parseEther("15.0") });
 
-            expect(await vault.deposits(user1.address)).to.equal(ethers.utils.parseEther("10.0"));
-            expect(await vault.deposits(user2.address)).to.equal(ethers.utils.parseEther("20.0"));
-            expect(await vault.deposits(user3.address)).to.equal(ethers.utils.parseEther("15.0"));
-            expect(await vault.totalDeposits()).to.equal(ethers.utils.parseEther("45.0"));
+            expect(await vault.deposits(user1.address)).to.equal(ethers.parseEther("10.0"));
+            expect(await vault.deposits(user2.address)).to.equal(ethers.parseEther("20.0"));
+            expect(await vault.deposits(user3.address)).to.equal(ethers.parseEther("15.0"));
+            expect(await vault.totalDeposits()).to.equal(ethers.parseEther("45.0"));
         });
     });
 
@@ -295,7 +296,7 @@ describe("Lesson 10: 安全机制基础", function () {
                 [owner.address, user1.address, user2.address],
                 2 // 需要 2 个确认
             );
-            await multiSig.deployed();
+            await multiSig.waitForDeployment();
         });
 
         it("应该正确初始化多签钱包", async function () {
@@ -305,7 +306,7 @@ describe("Lesson 10: 安全机制基础", function () {
         it("应该能提交交易", async function () {
             const tx = await multiSig.submitTransaction(
                 user1.address,
-                ethers.utils.parseEther("1.0"),
+                ethers.parseEther("1.0"),
                 "0x"
             );
 
@@ -318,7 +319,7 @@ describe("Lesson 10: 安全机制基础", function () {
         it("应该能确认交易", async function () {
             await multiSig.submitTransaction(
                 user1.address,
-                ethers.utils.parseEther("1.0"),
+                ethers.parseEther("1.0"),
                 "0x"
             );
 
@@ -330,7 +331,7 @@ describe("Lesson 10: 安全机制基础", function () {
         it("应该能在足够确认后执行交易", async function () {
             await multiSig.submitTransaction(
                 user1.address,
-                ethers.utils.parseEther("1.0"),
+                ethers.parseEther("1.0"),
                 "0x"
             );
 
@@ -338,7 +339,7 @@ describe("Lesson 10: 安全机制基础", function () {
             await multiSig.connect(user1).confirmTransaction(0);
 
             // 注意：执行需要发送 Ether 到合约
-            await multiSig.deposit({ value: ethers.utils.parseEther("5.0") });
+            await multiSig.deposit({ value: ethers.parseEther("5.0") });
 
             await expect(multiSig.executeTransaction(0))
                 .to.emit(multiSig, "Execution");
@@ -347,7 +348,7 @@ describe("Lesson 10: 安全机制基础", function () {
         it("未确认的交易不能执行", async function () {
             await multiSig.submitTransaction(
                 user1.address,
-                ethers.utils.parseEther("1.0"),
+                ethers.parseEther("1.0"),
                 "0x"
             );
 
@@ -362,14 +363,14 @@ describe("Lesson 10: 安全机制基础", function () {
             // 测试 Pausable
             await vault.pause();
             await expect(
-                vault.connect(user1).deposit({ value: ethers.utils.parseEther("1.0") })
+                vault.connect(user1).deposit({ value: ethers.parseEther("1.0") })
             ).to.be.revertedWith("Pausable: paused");
 
             await vault.unpause();
 
             // 测试 ReentrancyGuard
-            await vault.connect(user1).deposit({ value: ethers.utils.parseEther("5.0") });
-            await vault.connect(user1).withdraw(ethers.utils.parseEther("2.0"));
+            await vault.connect(user1).deposit({ value: ethers.parseEther("5.0") });
+            await vault.connect(user1).withdraw(ethers.parseEther("2.0"));
 
             // 测试 Ownable
             await expect(

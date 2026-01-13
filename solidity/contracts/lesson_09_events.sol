@@ -79,11 +79,11 @@ contract EventContract {
      * @dev 管理员操作事件
      * @notice 使用枚举和结构体
      */
-    enum AdminAction { Pause, Unpause, UpdateConfig, EmergencyWithdraw }
+    enum AdminActionType { Pause, Unpause, UpdateConfig, EmergencyWithdraw }
 
     event AdminAction(
         address indexed admin,
-        AdminAction action,
+        AdminActionType action,
         uint256 timestamp,
         string details
     );
@@ -226,7 +226,7 @@ contract EventContract {
      * @dev 管理员操作
      */
     function performAdminAction(
-        AdminAction _action,
+        AdminActionType _action,
         string memory _details
     ) public {
         require(msg.sender == owner, "Only owner");
@@ -331,7 +331,7 @@ contract EventContract {
 
         emit AdminAction(
             msg.sender,
-            AdminAction.UpdateConfig,
+            AdminActionType.UpdateConfig,
             block.timestamp,
             _operationType
         );

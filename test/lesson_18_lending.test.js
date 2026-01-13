@@ -3,8 +3,9 @@
  * 测试借贷协议的核心功能
  */
 
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("📘 Lesson 18: 借贷协议", function () {
     let lendingPool, token;
@@ -53,7 +54,7 @@ describe("📘 Lesson 18: 借贷协议", function () {
 
         it("应该正确设置借款利率", async function () {
             const borrowRate = await lendingPool.borrowRatePerBlock();
-            expect(borrowRate).to.be.gt(0);
+            expect(borrowRate).to.be.greaterThan(0);
         });
     });
 
@@ -231,7 +232,7 @@ describe("📘 Lesson 18: 借贷协议", function () {
             const totalBorrows = await lendingPool.totalBorrows();
 
             // 借款应该增加（包含利息）
-            expect(totalBorrows).to.be.gt(ethers.parseEther("500"));
+            expect(totalBorrows).to.be.greaterThan(ethers.parseEther("500"));
         });
 
         it("应该正确更新借款指数", async function () {
@@ -248,7 +249,7 @@ describe("📘 Lesson 18: 借贷协议", function () {
             const borrowIndexAfter = await lendingPool.borrowIndex();
 
             // 借款指数应该增加
-            expect(borrowIndexAfter).to.be.gt(borrowIndexBefore);
+            expect(borrowIndexAfter).to.be.greaterThan(borrowIndexBefore);
         });
 
         it("应该正确计算用户的借款余额（含利息）", async function () {
@@ -261,7 +262,7 @@ describe("📘 Lesson 18: 借贷协议", function () {
             const borrowBalance = await lendingPool.calculateBorrowBalance(borrower.address);
 
             // 借款余额应该大于原始借款
-            expect(borrowBalance).to.be.gt(ethers.parseEther("500"));
+            expect(borrowBalance).to.be.greaterThan(ethers.parseEther("500"));
         });
     });
 
@@ -546,7 +547,7 @@ describe("📘 Lesson 18: 借贷协议", function () {
             const borrowBalance = await lendingPool.calculateBorrowBalance(borrower.address);
 
             // 借款余额应该包含利息
-            expect(borrowBalance).to.be.gt(ethers.parseEther("500"));
+            expect(borrowBalance).to.be.greaterThan(ethers.parseEther("500"));
         });
     });
 });

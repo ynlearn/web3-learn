@@ -267,7 +267,7 @@ contract MinimalCloneFactory {
      * @dev 创建克隆合约
      * @param target 要克隆的目标合约
      */
-    function createClone(address target) external returns (address result) {
+    function createClone(address target) public returns (address result) {
         // EIP-1167 克隆字节码
         bytes20 targetBytes = bytes20(target);
         assembly {

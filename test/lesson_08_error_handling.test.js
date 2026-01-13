@@ -1,5 +1,6 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("Lesson 08: 错误处理", function () {
     let bank;
@@ -10,12 +11,12 @@ describe("Lesson 08: 错误处理", function () {
 
         const BankContract = await ethers.getContractFactory("BankContract");
         bank = await BankContract.deploy();
-        await bank.deployed();
+        await bank.waitForDeployment();
     });
 
     describe("Require 测试", function () {
         it("应该成功存款", async function () {
-            const depositAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("1.0");
 
             await expect(
                 bank.connect(user1).deposit({ value: depositAmount })
@@ -34,8 +35,8 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该成功取款", async function () {
-            const depositAmount = ethers.utils.parseEther("2.0");
-            const withdrawAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("2.0");
+            const withdrawAmount = ethers.parseEther("1.0");
 
             await bank.connect(user1).deposit({ value: depositAmount });
             await expect(
@@ -45,11 +46,11 @@ describe("Lesson 08: 错误处理", function () {
                 .withArgs(user1.address, withdrawAmount);
 
             const balance = await bank.getBalance();
-            expect(balance).to.equal(depositAmount.sub(withdrawAmount));
+            expect(balance).to.equal((depositAmount - withdrawAmount));
         });
 
         it("应该拒绝余额不足的取款", async function () {
-            const withdrawAmount = ethers.utils.parseEther("1.0");
+            const withdrawAmount = ethers.parseEther("1.0");
 
             await expect(
                 bank.connect(user1).withdraw(withdrawAmount)
@@ -57,7 +58,7 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该拒绝零金额取款", async function () {
-            const depositAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("1.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             await expect(
@@ -66,27 +67,27 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该成功批量取款", async function () {
-            const depositAmount = ethers.utils.parseEther("5.0");
+            const depositAmount = ethers.parseEther("5.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             const amounts = [
-                ethers.utils.parseEther("1.0"),
-                ethers.utils.parseEther("2.0"),
-                ethers.utils.parseEther("1.5")
+                ethers.parseEther("1.0"),
+                ethers.parseEther("2.0"),
+                ethers.parseEther("1.5")
             ];
 
             await expect(
                 bank.connect(user1).batchWithdraw(amounts)
             )
                 .to.emit(bank, "Withdrawal")
-                .withArgs(user1.address, ethers.utils.parseEther("4.5"));
+                .withArgs(user1.address, ethers.parseEther("4.5"));
         });
 
         it("应该拒绝超过限制的批量取款", async function () {
-            const depositAmount = ethers.utils.parseEther("20.0");
+            const depositAmount = ethers.parseEther("20.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
-            const amounts = new Array(11).fill(ethers.utils.parseEther("1.0"));
+            const amounts = new Array(11).fill(ethers.parseEther("1.0"));
 
             await expect(
                 bank.connect(user1).batchWithdraw(amounts)
@@ -96,8 +97,8 @@ describe("Lesson 08: 错误处理", function () {
 
     describe("Revert 测试", function () {
         it("应该成功转账", async function () {
-            const depositAmount = ethers.utils.parseEther("3.0");
-            const transferAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("3.0");
+            const transferAmount = ethers.parseEther("1.0");
 
             await bank.connect(user1).deposit({ value: depositAmount });
             await expect(
@@ -107,32 +108,32 @@ describe("Lesson 08: 错误处理", function () {
                 .withArgs(user1.address, user2.address, transferAmount);
 
             const balance1 = await bank.getBalance();
-            expect(balance1).to.equal(depositAmount.sub(transferAmount));
+            expect(balance1).to.equal((depositAmount - transferAmount));
 
             const balance2 = await bank.connect(user2).getBalance();
             expect(balance2).to.equal(transferAmount);
         });
 
         it("应该拒绝转账到零地址", async function () {
-            const depositAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("1.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             await expect(
-                bank.connect(user1).transfer(ethers.constants.AddressZero, ethers.utils.parseEther("0.5"))
+                bank.connect(user1).transfer(ethers.ZeroAddress, ethers.parseEther("0.5"))
             ).to.be.revertedWith("Cannot transfer to zero address");
         });
 
         it("应该拒绝转账给自己", async function () {
-            const depositAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("1.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             await expect(
-                bank.connect(user1).transfer(user1.address, ethers.utils.parseEther("0.5"))
+                bank.connect(user1).transfer(user1.address, ethers.parseEther("0.5"))
             ).to.be.revertedWith("Cannot transfer to self");
         });
 
         it("应该拒绝零金额转账", async function () {
-            const depositAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("1.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             await expect(
@@ -141,9 +142,9 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该成功条件取款", async function () {
-            const depositAmount = ethers.utils.parseEther("2.0");
-            const withdrawAmount = ethers.utils.parseEther("1.0");
-            const fee = ethers.utils.parseEther("0.05");
+            const depositAmount = ethers.parseEther("2.0");
+            const withdrawAmount = ethers.parseEther("1.0");
+            const fee = ethers.parseEther("0.05");
 
             await bank.connect(user1).deposit({ value: depositAmount });
             await expect(
@@ -154,9 +155,9 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该拒绝过高的手续费", async function () {
-            const depositAmount = ethers.utils.parseEther("2.0");
-            const withdrawAmount = ethers.utils.parseEther("1.0");
-            const fee = ethers.utils.parseEther("0.2"); // 20%，超过 10%
+            const depositAmount = ethers.parseEther("2.0");
+            const withdrawAmount = ethers.parseEther("1.0");
+            const fee = ethers.parseEther("0.2"); // 20%，超过 10%
 
             await bank.connect(user1).deposit({ value: depositAmount });
 
@@ -168,15 +169,15 @@ describe("Lesson 08: 错误处理", function () {
 
     describe("Assert 测试", function () {
         it("应该正确计算利息", async function () {
-            const principal = ethers.utils.parseEther("100");
+            const principal = ethers.parseEther("100");
             const rate = 5; // 5%
 
             const interest = await bank.calculateInterest(principal, rate);
-            expect(interest).to.equal(ethers.utils.parseEther("5"));
+            expect(interest).to.equal(ethers.parseEther("5"));
         });
 
         it("应该拒绝过高的利率", async function () {
-            const principal = ethers.utils.parseEther("100");
+            const principal = ethers.parseEther("100");
             const rate = 150; // 超过 100%
 
             await expect(
@@ -216,8 +217,8 @@ describe("Lesson 08: 错误处理", function () {
 
     describe("自定义错误测试", function () {
         it("应该成功使用自定义错误取款", async function () {
-            const depositAmount = ethers.utils.parseEther("2.0");
-            const withdrawAmount = ethers.utils.parseEther("1.0");
+            const depositAmount = ethers.parseEther("2.0");
+            const withdrawAmount = ethers.parseEther("1.0");
 
             await bank.connect(user1).deposit({ value: depositAmount });
             await expect(
@@ -234,7 +235,7 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该拒绝余额不足（自定义错误）", async function () {
-            const withdrawAmount = ethers.utils.parseEther("1.0");
+            const withdrawAmount = ethers.parseEther("1.0");
 
             await expect(
                 bank.connect(user1).withdrawWithCustomError(withdrawAmount)
@@ -254,25 +255,25 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该成功批量转账", async function () {
-            const depositAmount = ethers.utils.parseEther("10.0");
+            const depositAmount = ethers.parseEther("10.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             const recipients = [user2.address, owner.address];
             const amounts = [
-                ethers.utils.parseEther("3.0"),
-                ethers.utils.parseEther("2.0")
+                ethers.parseEther("3.0"),
+                ethers.parseEther("2.0")
             ];
 
             await expect(
                 bank.connect(user1).batchTransferWithCustomError(recipients, amounts)
             )
                 .to.emit(bank, "Transfer")
-                .withArgs(user1.address, user2.address, ethers.utils.parseEther("3.0"));
+                .withArgs(user1.address, user2.address, ethers.parseEther("3.0"));
         });
 
         it("应该拒绝长度不匹配的批量转账", async function () {
             const recipients = [user2.address, owner.address];
-            const amounts = [ethers.utils.parseEther("3.0")];
+            const amounts = [ethers.parseEther("3.0")];
 
             await expect(
                 bank.connect(user1).batchTransferWithCustomError(recipients, amounts)
@@ -280,11 +281,11 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该拒绝过多的批量转账", async function () {
-            const depositAmount = ethers.utils.parseEther("100.0");
+            const depositAmount = ethers.parseEther("100.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             const recipients = new Array(21).fill(user2.address);
-            const amounts = new Array(21).fill(ethers.utils.parseEther("1.0"));
+            const amounts = new Array(21).fill(ethers.parseEther("1.0"));
 
             await expect(
                 bank.connect(user1).batchTransferWithCustomError(recipients, amounts)
@@ -294,10 +295,10 @@ describe("Lesson 08: 错误处理", function () {
 
     describe("Gas 消耗对比", function () {
         it("自定义错误应该比 require 节省 Gas", async function () {
-            const depositAmount = ethers.utils.parseEther("2.0");
+            const depositAmount = ethers.parseEther("2.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
-            const withdrawAmount = ethers.utils.parseEther("1.0");
+            const withdrawAmount = ethers.parseEther("1.0");
 
             // 测试传统方式
             const tx1 = await bank.connect(user1).withdrawTraditional(withdrawAmount);
@@ -314,18 +315,18 @@ describe("Lesson 08: 错误处理", function () {
             console.log("Custom error withdraw Gas:", receipt2.gasUsed.toString());
 
             // 自定义错误应该节省约 60-70 Gas
-            expect(receipt2.gasUsed.lt(receipt1.gasUsed)).to.be.true;
+            expect(receipt2.gasUsed < receipt1.gasUsed).to.be.true;
         });
     });
 
     describe("复杂操作测试", function () {
         it("应该成功执行复杂操作", async function () {
-            const depositAmount = ethers.utils.parseEther("10.0");
+            const depositAmount = ethers.parseEther("10.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
-            const amount = ethers.utils.parseEther("3.0");
-            const fee = ethers.utils.parseEther("0.1");
-            const minBalance = ethers.utils.parseEther("2.0");
+            const amount = ethers.parseEther("3.0");
+            const fee = ethers.parseEther("0.1");
+            const minBalance = ethers.parseEther("2.0");
 
             await expect(
                 bank.connect(user1).complexOperation(amount, fee, minBalance, user2.address)
@@ -335,12 +336,12 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该拒绝违反最小余额约束的操作", async function () {
-            const depositAmount = ethers.utils.parseEther("10.0");
+            const depositAmount = ethers.parseEther("10.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
-            const amount = ethers.utils.parseEther("9.0");
-            const fee = ethers.utils.parseEther("0.1");
-            const minBalance = ethers.utils.parseEther("5.0"); // user2 余额为 0，无法满足
+            const amount = ethers.parseEther("9.0");
+            const fee = ethers.parseEther("0.1");
+            const minBalance = ethers.parseEther("5.0"); // user2 余额为 0，无法满足
 
             await expect(
                 bank.connect(user1).complexOperation(amount, fee, minBalance, user2.address)
@@ -350,7 +351,7 @@ describe("Lesson 08: 错误处理", function () {
 
     describe("辅助函数测试", function () {
         it("应该正确返回余额", async function () {
-            const depositAmount = ethers.utils.parseEther("5.0");
+            const depositAmount = ethers.parseEther("5.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             const balance = await bank.connect(user1).getBalance();
@@ -358,7 +359,7 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该正确返回合约总余额", async function () {
-            const depositAmount = ethers.utils.parseEther("5.0");
+            const depositAmount = ethers.parseEther("5.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
             const totalBalance = await bank.getTotalBalance();
@@ -366,7 +367,7 @@ describe("Lesson 08: 错误处理", function () {
         });
 
         it("应该通过 receive 函数接收 Ether", async function () {
-            const depositAmount = ethers.utils.parseEther("2.0");
+            const depositAmount = ethers.parseEther("2.0");
 
             await expect(
                 user1.sendTransaction({ to: bank.address, value: depositAmount })
@@ -378,28 +379,28 @@ describe("Lesson 08: 错误处理", function () {
 
     describe("防重入测试", function () {
         it("应该防止重入攻击", async function () {
-            const depositAmount = ethers.utils.parseEther("5.0");
+            const depositAmount = ethers.parseEther("5.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
-            const withdrawAmount = ethers.utils.parseEther("1.0");
+            const withdrawAmount = ethers.parseEther("1.0");
 
             // 正常取款应该成功
             await bank.connect(user1).withdrawEther(withdrawAmount);
 
             const balance = await bank.connect(user1).getBalance();
-            expect(balance).to.equal(depositAmount.sub(withdrawAmount));
+            expect(balance).to.equal((depositAmount - withdrawAmount));
         });
 
         it("转账失败应该恢复状态", async function () {
             // 部署一个拒绝接收 Ether 的合约
             const RejectReceiver = await ethers.getContractFactory("RejectReceiver");
             const rejectReceiver = await RejectReceiver.deploy();
-            await rejectReceiver.deployed();
+            await rejectReceiver.waitForDeployment();
 
-            const depositAmount = ethers.utils.parseEther("5.0");
+            const depositAmount = ethers.parseEther("5.0");
             await bank.connect(user1).deposit({ value: depositAmount });
 
-            const withdrawAmount = ethers.utils.parseEther("1.0");
+            const withdrawAmount = ethers.parseEther("1.0");
 
             // 修改 bank 合约的所有者为我们控制
             // 这个测试需要特殊设置，这里简化处理

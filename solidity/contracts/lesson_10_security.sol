@@ -30,7 +30,7 @@ contract Ownable {
     /**
      * @dev 仅所有者修饰器
      */
-    modifier onlyOwner() {
+    modifier onlyOwner() virtual {
         require(msg.sender == owner, "Ownable: caller is not the owner");
         _;
     }
@@ -519,7 +519,7 @@ contract MultiSigWallet is Ownable {
     event OwnerAdded(address indexed owner);
     event OwnerRemoved(address indexed owner);
 
-    modifier onlyOwner() {
+    modifier onlyOwner() override {
         bool isOwner = false;
         for (uint256 i = 0; i < owners.length; i++) {
             if (owners[i] == msg.sender) {

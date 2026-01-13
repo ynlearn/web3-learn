@@ -593,7 +593,7 @@ contract TimeManipulationVulnerable {
 contract TimeManipulationFixed {
     struct LotteryEntry {
         address player;
-        uint256 commitHash;
+        bytes32 commitHash;
         uint256 revealTime;
         uint256 randomValue;
     }
