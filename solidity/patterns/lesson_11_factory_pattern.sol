@@ -153,12 +153,25 @@ contract CREATE2Factory {
         bytes memory bytecode,
         bytes32 salt
     ) public pure returns (address) {
+        // Extract the actual bytecode data (skip Solidity memory layout prefix)
+        // In Solidity, bytes memory is stored as: [length (32 bytes)][data (variable)]
+        // We need to hash only the data part, not the length prefix
+        bytes32 bytecodeHash;
+        assembly {
+            // Get pointer to data (skip first 32 bytes which is the length)
+            let dataPtr := add(bytecode, 0x20)
+            // Get length from first 32 bytes
+            let length := mload(bytecode)
+            // Hash the bytecode data
+            bytecodeHash := keccak256(dataPtr, length)
+        }
+
         bytes32 hash = keccak256(
             abi.encodePacked(
                 bytes1(0xff), // CREATE2 前缀
                 deployer,
                 salt,
-                keccak256(bytecode)
+                bytecodeHash
             )
         );
 
@@ -249,6 +262,17 @@ contract DeterministicFactory {
             keccak256(bytecodeWithArgs)
         )))));
     }
+
+    /**
+     * @dev 检查地址是否已部署
+     */
+    function isDeployed(address _addr) public view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return size > 0;
+    }
 }
 
 // ==================== 克隆工厂(EIP-1167) ====================
@@ -268,18 +292,78 @@ contract MinimalCloneFactory {
      * @param target 要克隆的目标合约
      */
     function createClone(address target) public returns (address result) {
-        // EIP-1167 克隆字节码
+        // EIP-1167 最小代理合约标准实现
+        // Init code (10 bytes): 3d602d80600a3d3981f3
+        // Runtime code (45 bytes): 363d3d373d3d3d363d73 + 20-byte address + 5af43d82803e903d91602b57fd5bf3
         bytes20 targetBytes = bytes20(target);
         assembly {
-            // 复制目标合约地址到内存
-            // 加载克隆运行时代码
-            let clone := mload(0x40)
-            mstore(clone, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73) // 11 words
-            mstore(add(clone, 0x14), targetBytes) // 地址
-            mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf3) // 7 words
+            let ptr := mload(0x40)
 
-            // 创建克隆
-            result := create(0, clone, 0x37)
+            // Init code at position 0 (10 bytes)
+            mstore8(ptr, 0x3d)
+            mstore8(add(ptr, 1), 0x60)
+            mstore8(add(ptr, 2), 0x2d)
+            mstore8(add(ptr, 3), 0x80)
+            mstore8(add(ptr, 4), 0x60)
+            mstore8(add(ptr, 5), 0x0a)
+            mstore8(add(ptr, 6), 0x3d)
+            mstore8(add(ptr, 7), 0x39)
+            mstore8(add(ptr, 8), 0x81)
+            mstore8(add(ptr, 9), 0xf3)
+
+            // Runtime code at position 10
+            // First 10 bytes: 363d3d373d3d3d363d73
+            mstore8(add(ptr, 10), 0x36)
+            mstore8(add(ptr, 11), 0x3d)
+            mstore8(add(ptr, 12), 0x3d)
+            mstore8(add(ptr, 13), 0x37)
+            mstore8(add(ptr, 14), 0x3d)
+            mstore8(add(ptr, 15), 0x3d)
+            mstore8(add(ptr, 16), 0x3d)
+            mstore8(add(ptr, 17), 0x36)
+            mstore8(add(ptr, 18), 0x3d)
+            mstore8(add(ptr, 19), 0x73)
+
+            // 20-byte address at position 20 (correct order - most significant byte first)
+            mstore8(add(ptr, 20), byte(0, targetBytes))
+            mstore8(add(ptr, 21), byte(1, targetBytes))
+            mstore8(add(ptr, 22), byte(2, targetBytes))
+            mstore8(add(ptr, 23), byte(3, targetBytes))
+            mstore8(add(ptr, 24), byte(4, targetBytes))
+            mstore8(add(ptr, 25), byte(5, targetBytes))
+            mstore8(add(ptr, 26), byte(6, targetBytes))
+            mstore8(add(ptr, 27), byte(7, targetBytes))
+            mstore8(add(ptr, 28), byte(8, targetBytes))
+            mstore8(add(ptr, 29), byte(9, targetBytes))
+            mstore8(add(ptr, 30), byte(10, targetBytes))
+            mstore8(add(ptr, 31), byte(11, targetBytes))
+            mstore8(add(ptr, 32), byte(12, targetBytes))
+            mstore8(add(ptr, 33), byte(13, targetBytes))
+            mstore8(add(ptr, 34), byte(14, targetBytes))
+            mstore8(add(ptr, 35), byte(15, targetBytes))
+            mstore8(add(ptr, 36), byte(16, targetBytes))
+            mstore8(add(ptr, 37), byte(17, targetBytes))
+            mstore8(add(ptr, 38), byte(18, targetBytes))
+            mstore8(add(ptr, 39), byte(19, targetBytes))
+
+            // Last 14 bytes: 5af43d82803e903d91602b57fd5bf3
+            mstore8(add(ptr, 40), 0x5a)
+            mstore8(add(ptr, 41), 0xf4)
+            mstore8(add(ptr, 42), 0x3d)
+            mstore8(add(ptr, 43), 0x82)
+            mstore8(add(ptr, 44), 0x80)
+            mstore8(add(ptr, 45), 0x3e)
+            mstore8(add(ptr, 46), 0x90)
+            mstore8(add(ptr, 47), 0x3d)
+            mstore8(add(ptr, 48), 0x91)
+            mstore8(add(ptr, 49), 0x60)
+            mstore8(add(ptr, 50), 0x2b)
+            mstore8(add(ptr, 51), 0x57)
+            mstore8(add(ptr, 52), 0xfd)
+            mstore8(add(ptr, 53), 0x5b)
+            mstore8(add(ptr, 54), 0xf3)
+
+            result := create(0, ptr, 55) // 10 init + 45 runtime = 55 bytes
 
             // 检查是否成功
             switch extcodesize(result)
@@ -289,9 +373,7 @@ contract MinimalCloneFactory {
         }
 
         clones.push(result);
-
         emit CloneCreated(result, target);
-
         return result;
     }
 
@@ -303,7 +385,7 @@ contract MinimalCloneFactory {
 
         for (uint256 i = 0; i < count; i++) {
             results[i] = createClone(target);
-            clones.push(results[i]);
+            // Don't push again - createClone already pushes to clones array
         }
 
         return results;
@@ -332,22 +414,87 @@ contract MinimalCloneFactory {
         bytes20 targetBytes = bytes20(target);
 
         assembly {
-            let clone := mload(0x40)
+            // First check if query has code (EOAs have no code)
+            let queryCodeSize := extcodesize(query)
 
-            // 加载目标合约的代码
-            mstore(clone, 0x363d3d373d3d3d363d73)
-            mstore(add(clone, 0xa), targetBytes)
-            mstore(add(clone, 0x1a), 0x5af43d82803e903d91602b57fd5bf3)
+            // EIP-1167 runtime code is exactly 45 bytes
+            // If query's code is not exactly 45 bytes, it's not a minimal proxy clone
+            switch queryCodeSize
+            case 0 {
+                result := 0
+            }
+            case 45 {
+                let clone := mload(0x40)
 
-            // 读取查询地址的代码
+            // EIP-1167 runtime code is 45 bytes
+            // Bytes 0-9:   363d3d373d3d3d363d
+            // Bytes 10-29: [20 bytes address]
+            // Bytes 30-44: 5af43d82803e903d91602b57fd5bf3
+
+            // Bytes 0-9
+            mstore8(clone, 0x36)
+            mstore8(add(clone, 1), 0x3d)
+            mstore8(add(clone, 2), 0x3d)
+            mstore8(add(clone, 3), 0x37)
+            mstore8(add(clone, 4), 0x3d)
+            mstore8(add(clone, 5), 0x3d)
+            mstore8(add(clone, 6), 0x3d)
+            mstore8(add(clone, 7), 0x36)
+            mstore8(add(clone, 8), 0x3d)
+            mstore8(add(clone, 9), 0x73)
+
+            // Bytes 10-29: Address (20 bytes) - correct order
+            mstore8(add(clone, 10), byte(0, targetBytes))
+            mstore8(add(clone, 11), byte(1, targetBytes))
+            mstore8(add(clone, 12), byte(2, targetBytes))
+            mstore8(add(clone, 13), byte(3, targetBytes))
+            mstore8(add(clone, 14), byte(4, targetBytes))
+            mstore8(add(clone, 15), byte(5, targetBytes))
+            mstore8(add(clone, 16), byte(6, targetBytes))
+            mstore8(add(clone, 17), byte(7, targetBytes))
+            mstore8(add(clone, 18), byte(8, targetBytes))
+            mstore8(add(clone, 19), byte(9, targetBytes))
+            mstore8(add(clone, 20), byte(10, targetBytes))
+            mstore8(add(clone, 21), byte(11, targetBytes))
+            mstore8(add(clone, 22), byte(12, targetBytes))
+            mstore8(add(clone, 23), byte(13, targetBytes))
+            mstore8(add(clone, 24), byte(14, targetBytes))
+            mstore8(add(clone, 25), byte(15, targetBytes))
+            mstore8(add(clone, 26), byte(16, targetBytes))
+            mstore8(add(clone, 27), byte(17, targetBytes))
+            mstore8(add(clone, 28), byte(18, targetBytes))
+            mstore8(add(clone, 29), byte(19, targetBytes))
+
+            // Bytes 30-44: Delegate code (15 bytes)
+            mstore8(add(clone, 30), 0x5a)
+            mstore8(add(clone, 31), 0xf4)
+            mstore8(add(clone, 32), 0x3d)
+            mstore8(add(clone, 33), 0x82)
+            mstore8(add(clone, 34), 0x80)
+            mstore8(add(clone, 35), 0x3e)
+            mstore8(add(clone, 36), 0x90)
+            mstore8(add(clone, 37), 0x3d)
+            mstore8(add(clone, 38), 0x91)
+            mstore8(add(clone, 39), 0x60)
+            mstore8(add(clone, 40), 0x2b)
+            mstore8(add(clone, 41), 0x57)
+            mstore8(add(clone, 42), 0xfd)
+            mstore8(add(clone, 43), 0x5b)
+            mstore8(add(clone, 44), 0xf3)
+
+            // 读取查询地址的代码 (45 bytes)
             let other := mload(0x40)
-            extcodecopy(query, other, 0, 0x2d)
+            extcodecopy(query, other, 0, 45)
 
             // 比较代码
             result := eq(
-                keccak256(clone, 0x2d),
-                keccak256(other, 0x2d)
+                keccak256(clone, 45),
+                keccak256(other, 45)
             )
+            }
+            default {
+                result := 0
+            }
         }
     }
 

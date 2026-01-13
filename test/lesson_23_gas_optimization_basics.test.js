@@ -17,31 +17,31 @@ describe("📘 Lesson 23: Gas 优化基础", function () {
         [owner, user1] = await ethers.getSigners();
 
         // 部署所有合约
-        const PackingOptimization = await ethers.getContractFactory("PackingOptimization");
+        const PackingOptimization = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:PackingOptimization");
         packingOptimization = await PackingOptimization.deploy();
 
-        const StorageVsMemory = await ethers.getContractFactory("StorageVsMemory");
+        const StorageVsMemory = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:StorageVsMemory");
         storageVsMemory = await StorageVsMemory.deploy();
 
-        const CalldataOptimization = await ethers.getContractFactory("CalldataOptimization");
+        const CalldataOptimization = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:CalldataOptimization");
         calldataOptimization = await CalldataOptimization.deploy();
 
-        const LoopOptimization = await ethers.getContractFactory("LoopOptimization");
+        const LoopOptimization = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:LoopOptimization");
         loopOptimization = await LoopOptimization.deploy();
 
-        const BatchOperations = await ethers.getContractFactory("BatchOperations");
+        const BatchOperations = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:BatchOperations");
         batchOperations = await BatchOperations.deploy();
 
-        const EventOptimization = await ethers.getContractFactory("EventOptimization");
+        const EventOptimization = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:EventOptimization");
         eventOptimization = await EventOptimization.deploy();
 
-        const ShortCircuiting = await ethers.getContractFactory("ShortCircuiting");
+        const ShortCircuiting = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:ShortCircuiting");
         shortCircuiting = await ShortCircuiting.deploy();
 
-        const MathOptimization = await ethers.getContractFactory("MathOptimization");
+        const MathOptimization = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:MathOptimization");
         mathOptimization = await MathOptimization.deploy();
 
-        const OptimizedContract = await ethers.getContractFactory("OptimizedContract");
+        const OptimizedContract = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:OptimizedContract");
         optimizedContract = await OptimizedContract.deploy();
 
         const GasComparison = await ethers.getContractFactory("solidity/gas-optimization/lesson_23_gas_optimization_basics.sol:GasComparison");

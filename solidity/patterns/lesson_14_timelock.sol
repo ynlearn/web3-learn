@@ -287,12 +287,14 @@ contract TimelockController {
             });
         }
 
-        transactions[txHash] = Transaction({
-            calls: calls,
-            salt: salt,
-            executeTime: executeTime,
-            executed: false
-        });
+        // 手动复制 calls 数组到 storage
+        Transaction storage txn = transactions[txHash];
+        txn.salt = salt;
+        txn.executeTime = executeTime;
+        txn.executed = false;
+        for (uint256 i = 0; i < calls.length; i++) {
+            txn.calls.push(calls[i]);
+        }
 
         emit CallScheduled(txHash, targets, values, datas, executeTime);
 
@@ -881,7 +883,21 @@ contract TimelockBestPractices {
         bytes32[] memory txHashes = new bytes32[](targets.length);
 
         for (uint256 i = 0; i < targets.length; i++) {
-            txHashes[i] = this.queueTransaction(targets[i], values[i], datas[i]);
+            // 直接调用队列逻辑，避免外部调用改变 msg.sender
+            address target = targets[i];
+            uint256 value = values[i];
+            bytes memory data = datas[i];
+
+            require(target != address(0), "Invalid target");
+            require(address(this).balance >= value, "Insufficient balance");
+
+            uint256 executeTime = block.timestamp + delay;
+            bytes32 txHash = keccak256(abi.encode(target, value, data, executeTime));
+
+            queuedTransactions[txHash] = true;
+            emit TransactionQueued(txHash, executeTime);
+
+            txHashes[i] = txHash;
         }
 
         return txHashes;

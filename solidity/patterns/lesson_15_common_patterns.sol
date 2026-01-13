@@ -331,7 +331,10 @@ contract Whitelist {
      * @dev 添加到白名单
      */
     function addToWhitelist(address account) external {
-        require(!isWhitelisted[account], "Already whitelisted");
+        // 如果已经在白名单中，静默忽略
+        if (isWhitelisted[account]) {
+            return;
+        }
 
         isWhitelisted[account] = true;
         whitelistedAddresses.push(account);
@@ -954,6 +957,7 @@ contract RobustToken is
      */
     function mint(address to, uint256 amount)
         external
+        whenNotPaused
         onlyRole(MINTER_ROLE)
         nonReentrant
     {

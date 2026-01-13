@@ -39,11 +39,13 @@ describe("Lesson 09: 事件与日志", function () {
 
             const transferAmount = ethers.parseEther("1.0");
 
+            const block = await ethers.provider.getBlock("latest");
+
             await expect(
                 eventContract.connect(user1).transfer(user2.address, transferAmount)
             )
                 .to.emit(eventContract, "Transfer")
-                .withArgs(user1.address, user2.address, transferAmount);
+                .withArgs(user1.address, user2.address, transferAmount, block.timestamp + 1);
         });
 
         it("应该触发批量转账事件", async function () {
@@ -69,21 +71,23 @@ describe("Lesson 09: 事件与日志", function () {
         });
 
         it("应该触发用户验证事件", async function () {
+            const block = await ethers.provider.getBlock("latest");
             await expect(
                 eventContract.connect(owner).verifyUser(user1.address, true)
             )
                 .to.emit(eventContract, "UserVerified")
-                .withArgs(user1.address, true);
+                .withArgs(user1.address, true, block.timestamp + 1);
         });
 
         it("应该触发管理员操作事件", async function () {
             const actionType = 0; // AdminAction.Pause
+            const block = await ethers.provider.getBlock("latest");
 
             await expect(
                 eventContract.connect(owner).performAdminAction(actionType, "Emergency pause")
             )
                 .to.emit(eventContract, "AdminAction")
-                .withArgs(owner.address, actionType);
+                .withArgs(owner.address, actionType, block.timestamp + 1, "Emergency pause");
         });
 
         it("应该触发所有权转移事件", async function () {
@@ -97,42 +101,45 @@ describe("Lesson 09: 事件与日志", function () {
 
     describe("错误事件测试", function () {
         it("应该触发错误事件（无效参数）", async function () {
+            // 注意：由于交易会回滚，事件也会被取消
+            // 这些测试验证错误处理而不是事件
             await expect(
-                eventContract.connect(user1).conditionalTransfer(address(0), ethers.parseEther("1.0"), 0)
-            )
-                .to.emit(eventContract, "ErrorOccurred")
-                .withArgs(user1.address, "Invalid transfer parameters", 400);
+                eventContract.connect(user1).conditionalTransfer(ethers.ZeroAddress, ethers.parseEther("1.0"), 0)
+            ).to.be.revertedWith("Invalid parameters");
         });
 
         it("应该触发错误事件（余额不足）", async function () {
+            // 注意：由于交易会回滚，事件也会被取消
+            // 这些测试验证错误处理而不是事件
             await expect(
                 eventContract.connect(user1).conditionalTransfer(user2.address, ethers.parseEther("1.0"), 0)
-            )
-                .to.emit(eventContract, "ErrorOccurred")
-                .withArgs(user1.address, "Insufficient balance", 401);
+            ).to.be.revertedWith("Insufficient balance");
         });
     });
 
     describe("NFT 事件测试", function () {
         it("应该触发铸造事件", async function () {
             const uri = "ipfs://QmTest123";
+            const block = await ethers.provider.getBlock("latest");
 
             await expect(
                 nftContract.connect(user1).mint(uri)
             )
                 .to.emit(nftContract, "Minted")
-                .withArgs(1, user1.address, uri);
+                .withArgs(1, user1.address, uri, block.timestamp + 1);
         });
 
         it("应该触发销毁事件", async function () {
             const uri = "ipfs://QmTest123";
             await nftContract.connect(user1).mint(uri);
 
+            const block = await ethers.provider.getBlock("latest");
+
             await expect(
                 nftContract.connect(user1).burn(1)
             )
                 .to.emit(nftContract, "Burned")
-                .withArgs(1, user1.address);
+                .withArgs(1, user1.address, block.timestamp + 1);
         });
 
         it("应该触发元数据更新事件", async function () {
@@ -141,11 +148,13 @@ describe("Lesson 09: 事件与日志", function () {
 
             await nftContract.connect(user1).mint(oldUri);
 
+            const block = await ethers.provider.getBlock("latest");
+
             await expect(
                 nftContract.connect(user1).updateMetadata(1, newUri)
             )
                 .to.emit(nftContract, "MetadataUpdated")
-                .withArgs(1, oldUri, newUri);
+                .withArgs(1, oldUri, newUri, block.timestamp + 1);
         });
     });
 
@@ -154,6 +163,8 @@ describe("Lesson 09: 事件与日志", function () {
             const poolAddress = user2.address;
             const amountA = ethers.parseEther("10.0");
             const amountB = ethers.parseEther("20.0");
+
+            const block = await ethers.provider.getBlock("latest");
 
             await expect(
                 defiContract.connect(user1).addLiquidity(poolAddress, amountA, amountB)
@@ -164,7 +175,8 @@ describe("Lesson 09: 事件与日志", function () {
                     poolAddress,
                     amountA,
                     amountB,
-                    (amountA + amountB)
+                    (amountA + amountB),
+                    block.timestamp + 1
                 );
         });
 
@@ -173,6 +185,8 @@ describe("Lesson 09: 事件与日志", function () {
             const tokenIn = owner.address;
             const tokenOut = user1.address;
             const amountIn = ethers.parseEther("10.0");
+
+            const block = await ethers.provider.getBlock("latest");
 
             await expect(
                 defiContract.connect(user1).swap(poolAddress, tokenIn, tokenOut, amountIn)
@@ -184,7 +198,8 @@ describe("Lesson 09: 事件与日志", function () {
                     tokenIn,
                     tokenOut,
                     amountIn,
-                    (amountIn * 95).div(100)
+                    (amountIn * 95n) / 100n,
+                    block.timestamp + 1
                 );
         });
     });
@@ -257,23 +272,27 @@ describe("Lesson 09: 事件与日志", function () {
             console.log("Batch transfer Gas:", receipt.gasUsed.toString());
 
             // 批量操作应该比单独操作节省 Gas
-            expect(receipt.gasUsed.toNumber()).to.be.lessThan(500000);
+            expect(receipt.gasUsed).to.be.lessThan(500000);
         });
     });
 
     describe("复杂事件测试", function () {
         it("应该触发状态变更事件", async function () {
-            const key = ethers.formatBytes32String("testKey");
-            const newValue = ethers.formatBytes32String("testValue");
+            const key = ethers.encodeBytes32String("testKey");
+            const newValue = ethers.encodeBytes32String("testValue");
+
+            const block = await ethers.provider.getBlock("latest");
 
             await expect(
                 eventContract.connect(owner).updateState(key, newValue)
             )
                 .to.emit(eventContract, "StateChanged")
-                .withArgs(key, ethers.formatBytes32String(""), newValue);
+                .withArgs(key, ethers.encodeBytes32String(""), newValue, block.timestamp + 1);
         });
 
         it("应该触发复杂操作事件", async function () {
+            const block = await ethers.provider.getBlock("latest");
+
             await expect(
                 eventContract.connect(owner).complexOperation(
                     user1.address,
@@ -283,7 +302,7 @@ describe("Lesson 09: 事件与日志", function () {
                 )
             )
                 .to.emit(eventContract, "UserVerified")
-                .withArgs(user1.address, true);
+                .withArgs(user1.address, true, block.timestamp + 1);
         });
     });
 
@@ -292,7 +311,7 @@ describe("Lesson 09: 事件与日志", function () {
             const amount = ethers.parseEther("1.5");
 
             await expect(
-                user1.sendTransaction({ to: eventContract.address, value: amount })
+                user1.sendTransaction({ to: await eventContract.getAddress(), value: amount })
             )
                 .to.emit(eventContract, "Deposit")
                 .withArgs(user1.address, amount, 0, "Received ETH");
@@ -302,7 +321,7 @@ describe("Lesson 09: 事件与日志", function () {
             // 调用不存在的函数
             await expect(
                 user1.sendTransaction({
-                    to: eventContract.address,
+                    to: await eventContract.getAddress(),
                     data: "0x12345678"
                 })
             )

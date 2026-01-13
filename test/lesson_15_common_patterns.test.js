@@ -27,7 +27,7 @@ describe("常用模式合约测试", function () {
 
         beforeEach(async function () {
             [owner, newOwner, stranger] = await ethers.getSigners();
-            const Ownable = await ethers.getContractFactory("Ownable");
+            const Ownable = await ethers.getContractFactory("solidity/patterns/lesson_15_common_patterns.sol:Ownable");
             ownable = await Ownable.deploy();
             await ownable.waitForDeployment();
         });
@@ -96,7 +96,7 @@ describe("常用模式合约测试", function () {
 
         beforeEach(async function () {
             [admin, user1, user2] = await ethers.getSigners();
-            const AccessControl = await ethers.getContractFactory("AccessControl");
+            const AccessControl = await ethers.getContractFactory("solidity/patterns/lesson_15_common_patterns.sol:AccessControl");
             accessControl = await AccessControl.deploy();
             await accessControl.waitForDeployment();
         });
@@ -138,7 +138,7 @@ describe("常用模式合约测试", function () {
 
         beforeEach(async function () {
             [owner, user1, user2] = await ethers.getSigners();
-            const PausableToken = await ethers.getContractFactory("PausableToken");
+            const PausableToken = await ethers.getContractFactory("solidity/patterns/lesson_15_common_patterns.sol:PausableToken");
             pausableToken = await PausableToken.deploy(ethers.parseEther("1000"));
             await pausableToken.waitForDeployment();
         });
@@ -304,7 +304,7 @@ describe("常用模式合约测试", function () {
 
         beforeEach(async function () {
             [owner, user1, user2] = await ethers.getSigners();
-            const SecureVault = await ethers.getContractFactory("SecureVault");
+            const SecureVault = await ethers.getContractFactory("solidity/patterns/lesson_15_common_patterns.sol:SecureVault");
             vault = await SecureVault.deploy();
             await vault.waitForDeployment();
         });
@@ -539,7 +539,7 @@ describe("常用模式合约测试", function () {
 
         describe("销毁功能", function () {
             beforeEach(async function () {
-                await robustToken.mint(user1.address, ethers.parseEther("100"));
+                await robustToken.mint(owner.address, ethers.parseEther("100"));
             });
 
             it("应该允许拥有销毁角色的用户销毁", async function () {
@@ -596,7 +596,7 @@ describe("常用模式合约测试", function () {
 
     describe("Gas 消耗分析", function () {
         it("报告 Ownable 模式的 Gas 消耗", async function () {
-            const Ownable = await ethers.getContractFactory("Ownable");
+            const Ownable = await ethers.getContractFactory("solidity/patterns/lesson_15_common_patterns.sol:Ownable");
             const ownable = await Ownable.deploy();
             await ownable.waitForDeployment();
 
@@ -612,7 +612,7 @@ describe("常用模式合约测试", function () {
         });
 
         it("报告 Pausable 模式的 Gas 消耗", async function () {
-            const PausableToken = await ethers.getContractFactory("PausableToken");
+            const PausableToken = await ethers.getContractFactory("solidity/patterns/lesson_15_common_patterns.sol:PausableToken");
             const token = await PausableToken.deploy(ethers.parseEther("1000"));
             await token.waitForDeployment();
 
@@ -629,7 +629,7 @@ describe("常用模式合约测试", function () {
         });
 
         it("报告 AccessControl 模式的 Gas 消耗", async function () {
-            const AccessControl = await ethers.getContractFactory("AccessControl");
+            const AccessControl = await ethers.getContractFactory("solidity/patterns/lesson_15_common_patterns.sol:AccessControl");
             const ac = await AccessControl.deploy();
             await ac.waitForDeployment();
 
@@ -646,7 +646,7 @@ describe("常用模式合约测试", function () {
         });
 
         it("报告 ReentrancyGuard 模式的 Gas 消耗", async function () {
-            const SecureVault = await ethers.getContractFactory("SecureVault");
+            const SecureVault = await ethers.getContractFactory("solidity/patterns/lesson_15_common_patterns.sol:SecureVault");
             const vault = await SecureVault.deploy();
             await vault.waitForDeployment();
 

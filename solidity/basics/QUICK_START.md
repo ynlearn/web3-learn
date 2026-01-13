@@ -33,6 +33,9 @@ node --version
 mkdir solidity-learning
 cd solidity-learning
 
+npm install --save-dev hardhat
+npm install -g pnpm
+
 # 初始化 Hardhat 项目
 npx hardhat init
 

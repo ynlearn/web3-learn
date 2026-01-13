@@ -421,7 +421,14 @@ contract VotingStateMachine {
     }
 
     /**
-     * @dev 计算投票结果
+     * @dev 计算投票结果（公共接口）
+     */
+    function calculateResult(uint256 _proposalId) external {
+        _calculateResult(_proposalId);
+    }
+
+    /**
+     * @dev 计算投票结果（内部实现）
      */
     function _calculateResult(uint256 _proposalId) internal {
         Proposal storage proposal = proposals[_proposalId];

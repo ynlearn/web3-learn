@@ -38,3 +38,4 @@ build/
 temp/
 tmp/
 .states/
+.claude/

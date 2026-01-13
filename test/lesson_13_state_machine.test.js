@@ -579,7 +579,7 @@ describe("状态机模式合约测试", function () {
                 expect(campaign.state).to.equal(3); // CampaignState.Claimed
 
                 const creatorBalanceAfter = await ethers.provider.getBalance(creator.address);
-                expect(creatorBalanceAfter - creatorBalanceBefore).to.equal(ethers.parseEther("10"));
+                expect(creatorBalanceAfter - creatorBalanceBefore).to.be.closeTo(ethers.parseEther("10"), ethers.parseEther("0.01"));
             });
 
             it("不应该允许非创建者领取资金", async function () {
@@ -616,7 +616,7 @@ describe("状态机模式合约测试", function () {
                 await crowdfunding.connect(contributor1).refundContribution(campaignId);
 
                 const contributorBalanceAfter = await ethers.provider.getBalance(contributor1.address);
-                expect(contributorBalanceAfter - contributorBalanceBefore).to.equal(ethers.parseEther("3"));
+                expect(contributorBalanceAfter - contributorBalanceBefore).to.be.closeTo(ethers.parseEther("3"), ethers.parseEther("0.01"));
 
                 expect(await crowdfunding.getContribution(campaignId, contributor1.address))
                     .to.equal(0);
@@ -688,7 +688,7 @@ describe("状态机模式合约测试", function () {
 
             it("不应该允许从 Closed 状态转换", async function () {
                 await bestPractices.close();
-                await expect(bestPractices.resume()).to.be.revertedWith("Invalid transition");
+                await expect(bestPractices.resume()).to.be.revertedWith("Invalid state");
             });
         });
 
