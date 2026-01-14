@@ -7,6 +7,18 @@ import { expect } from "chai";
 import hre from "hardhat";
 const { ethers } = hre;
 
+// 辅助函数：计算平方根
+function sqrt(value) {
+    if (value === 0n) return 0n;
+    let z = (value + 1n) / 2n;
+    let y = value;
+    while (z < y) {
+        y = z;
+        z = (value / z + z) / 2n;
+    }
+    return y;
+}
+
 describe("📘 Lesson 17: AMM 自动做市商", function () {
     let token0, token1, pair;
     let owner, user1, user2;
@@ -66,8 +78,8 @@ describe("📘 Lesson 17: AMM 自动做市商", function () {
             expect(reserve0).to.equal(amount0);
             expect(reserve1).to.equal(amount1);
 
-            // 验证 LP 代币（减去锁定的最小流动性）
-            const expectedLiquidity = amount0 * amount1 / 1000n - 1000n;
+            // 验证 LP 代币（使用平方根公式：sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY）
+            const expectedLiquidity = sqrt(amount0 * amount1) - 1000n;
             expect(await pair.balanceOf(user1.address)).to.equal(expectedLiquidity);
 
             // 验证代币余额
@@ -81,8 +93,9 @@ describe("📘 Lesson 17: AMM 自动做市商", function () {
 
             await pair.connect(user1).addLiquidity(amount0, amount1, 0, 0);
 
-            // 验证零地址持有最小流动性
-            expect(await pair.balanceOf(ethers.ZeroAddress)).to.equal(1000);
+            // 验证永久锁定地址持有最小流动性
+            const DEAD_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+            expect(await pair.balanceOf(DEAD_ADDRESS)).to.equal(1000);
         });
 
         it("首次添加流动性应该接受任何比例", async function () {

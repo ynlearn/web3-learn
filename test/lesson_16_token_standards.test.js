@@ -16,24 +16,24 @@ describe("📘 Lesson 16: 代币标准完整实现", function () {
         [owner, user1, user2, user3] = await ethers.getSigners();
 
         // 部署 ERC20 代币
-        const MyToken = await ethers.getContractFactory("MyToken");
+        const MyToken = await ethers.getContractFactory("solidity/defi/lesson_16_token_standards.sol:MyToken");
         myToken = await MyToken.deploy(INITIAL_SUPPLY);
 
         // 部署可燃烧的 ERC20 代币
-        const BurnableToken = await ethers.getContractFactory("BurnableToken");
+        const BurnableToken = await ethers.getContractFactory("solidity/defi/lesson_16_token_standards.sol:BurnableToken");
         burnableToken = await BurnableToken.deploy(INITIAL_SUPPLY);
 
         // 部署 ERC721 NFT
-        const MyNFT = await ethers.getContractFactory("MyNFT");
-        myNFT = await MyNFT();
+        const MyNFT = await ethers.getContractFactory("solidity/defi/lesson_16_token_standards.sol:MyNFT");
+        myNFT = await MyNFT.deploy();
 
         // 部署 ERC1155 多代币
-        const MyMultiToken = await ethers.getContractFactory("MyMultiToken");
-        myMultiToken = await MyMultiToken();
+        const MyMultiToken = await ethers.getContractFactory("solidity/defi/lesson_16_token_standards.sol:MyMultiToken");
+        myMultiToken = await MyMultiToken.deploy();
 
         // 部署代币对比合约
-        const TokenComparison = await ethers.getContractFactory("TokenComparison");
-        tokenComparison = await TokenComparison();
+        const TokenComparison = await ethers.getContractFactory("solidity/defi/lesson_16_token_standards.sol:TokenComparison");
+        tokenComparison = await TokenComparison.deploy();
     });
 
     // ==================== ERC20 测试 ====================
@@ -276,12 +276,14 @@ describe("📘 Lesson 16: 代币标准完整实现", function () {
                 ).to.be.revertedWith("Mint to zero address");
             });
 
-            it("不能重复铸造相同 tokenId", async function () {
+            it("铸造的 tokenId 应该唯一递增", async function () {
+                const tokenId1 = await myNFT.mint.staticCall(user1.address);
                 await myNFT.mint(user1.address);
 
-                await expect(
-                    myNFT.mint(user1.address)  // 会尝试使用相同的 tokenId
-                ).to.be.reverted;  // 实际会递增，所以这个测试需要调整逻辑
+                const tokenId2 = await myNFT.mint.staticCall(user1.address);
+                await myNFT.mint(user1.address);
+
+                expect(tokenId2).to.equal(Number(tokenId1) + 1);
             });
 
             it("应该正确触发 Transfer 事件", async function () {
@@ -437,7 +439,7 @@ describe("📘 Lesson 16: 代币标准完整实现", function () {
             });
 
             it("应该能够销毁 NFT", async function () {
-                await myNFT.burn(0);
+                await myNFT.connect(user1).burn(0);
 
                 await expect(
                     myNFT.ownerOf(0)
@@ -448,14 +450,14 @@ describe("📘 Lesson 16: 代币标准完整实现", function () {
                 await myNFT.mint(user1.address);
                 expect(await myNFT.balanceOf(user1.address)).to.equal(2);
 
-                await myNFT.burn(0);
+                await myNFT.connect(user1).burn(0);
 
                 expect(await myNFT.balanceOf(user1.address)).to.equal(1);
             });
 
             it("销毁应该清除授权", async function () {
                 await myNFT.connect(user1).approve(user2.address, 0);
-                await myNFT.burn(0);
+                await myNFT.connect(user1).burn(0);
 
                 await expect(
                     myNFT.getApproved(0)

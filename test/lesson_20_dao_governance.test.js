@@ -17,7 +17,7 @@ describe("📘 Lesson 20: DAO 治理系统", function () {
         [owner, voter1, voter2, voter3, proposer] = await ethers.getSigners();
 
         // 部署 DAO 工厂
-        const DAOFactory = await ethers.getContractFactory("defi/lesson_20_dao_governance.sol:DAOFactory");
+        const DAOFactory = await ethers.getContractFactory("DAOFactory");
         daoFactory = await DAOFactory.deploy();
 
         // 创建 DAO 配置

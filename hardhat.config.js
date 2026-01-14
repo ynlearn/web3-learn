@@ -17,6 +17,7 @@ export default {
             enabled: true,
             runs: 200,
           },
+          evmVersion: "cancun",
         },
       },
       {
@@ -26,10 +27,12 @@ export default {
             enabled: true,
             runs: 200,
           },
+          evmVersion: "cancun",
         },
       },
     ],
   },
+  evmVersion: "cancun",
   networks: {
     hardhat: {
       chainId: 31337,
@@ -63,9 +66,6 @@ export default {
     cache: "./cache",
     artifacts: "./artifacts",
   },
-  remappings: [
-    "defi/=./defi/",
-  ],
   mocha: {
     timeout: 40000,
   },
