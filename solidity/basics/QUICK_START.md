@@ -57,6 +57,11 @@ solidity-learning/
 └── package.json       # 项目依赖
 ```
 
+**本项目的测试文件位置**：所有测试文件统一放在 `web3/test/` 目录下，例如：
+- `test/lesson_01_hello_world.test.js`
+- `test/lesson_02_data_types.test.js`
+- ... 等 25 个测试文件
+
 #### 运行测试
 
 ```bash
@@ -67,6 +72,9 @@ npx hardhat compile
 npx hardhat test
 
 # 运行特定测试文件
+
+# 在本项目 web3/ 目录下运行测试
+cd web3
 npx hardhat test test/lesson_01_hello_world.test.js
 
 # 查看 Gas 报告

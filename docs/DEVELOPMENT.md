@@ -401,14 +401,12 @@ web3/
 ├── solidity/                           # 📜 Solidity 教学内容
 │   ├── basics/                         # 第一阶段: 基础语法 (Lesson 01-05)
 │   │   ├── lesson_01_hello_world.sol
-│   │   ├── lesson_01_hello_world.test.js
 │   │   ├── README_lesson_01.md         # 课程教程
 │   │   ├── QUICK_START.md              # 快速入门
 │   │   └── STAGE_1_SUMMARY.md          # 阶段总结
 │   │
 │   ├── contracts/                      # 第二阶段: 合约进阶 (Lesson 06-10)
 │   │   ├── lesson_06_state_management.sol
-│   │   ├── lesson_06_state_management.test.js
 │   │   └── README_lesson_06.md
 │   │
 │   ├── patterns/                       # 第三阶段: 设计模式 (Lesson 11-15)
@@ -422,16 +420,20 @@ web3/
 │   │
 │   └── gas-optimization/               # 第五阶段: Gas 优化 (Lesson 23-25)
 │       ├── lesson_23_gas_optimization_basics.sol
-│       ├── lesson_23_gas_optimization_basics.test.js
 │       └── README_lesson_23.md
 │
 ├── defi/                               # 第四阶段: DeFi 实战 (Lesson 16-20)
 │   ├── lesson_16_token_standards.sol
-│   ├── lesson_16_token_standards.test.js
 │   ├── README_lesson_16.md
 │   ├── INSTALLATION.md                 # 安装说明
 │   ├── hardhat.config.js               # Hardhat 配置
 │   └── README_Stage4.md                # 阶段总结
+│
+├── test/                               # 🧪 测试文件目录（根目录）
+│   ├── lesson_01_hello_world.test.js
+│   ├── lesson_02_data_types.test.js
+│   ├── ...                             # 共 25 个测试文件
+│   └── lesson_25_audit_testing.test.js
 │
 ├── nft/                                # NFT 开发（待扩展）
 ├── dao/                                # DAO 治理（待扩展）
@@ -519,7 +521,7 @@ npx hardhat compile
 npx hardhat test
 
 # 运行特定测试文件
-npx hardhat test test/lesson_01.test.js
+npx hardhat test test/lesson_01_hello_world.test.js
 
 # 显示详细输出
 npx hardhat test --verbose

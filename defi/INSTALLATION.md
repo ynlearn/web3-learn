@@ -26,13 +26,13 @@ npx hardhat compile
 
 ```bash
 # 运行所有测试
-npm test
+npx hardhat test
 
 # 运行特定课程的测试
-npx hardhat test lesson_17_dex_amm.test.js
-npx hardhat test lesson_18_lending.test.js
-npx hardhat test lesson_19_yield_aggregator.test.js
-npx hardhat test lesson_20_dao_governance.test.js
+npx hardhat test test/lesson_17_dex_amm.test.js
+npx hardhat test test/lesson_18_lending.test.js
+npx hardhat test test/lesson_19_yield_aggregator.test.js
+npx hardhat test test/lesson_20_dao_governance.test.js
 ```
 
 ### 4. 查看 Gas 报告
@@ -54,28 +54,29 @@ npm run test:coverage
 ## 📚 课程结构
 
 ```
-web3/defi/
-├── lesson_17_dex_amm.sol           # AMM 合约实现
-├── lesson_17_dex_amm.test.js       # AMM 测试
-├── README_lesson_17.md             # AMM 教学文档
+web3/
+├── defi/                           # DeFi 实战课程目录
+│   ├── lesson_16_token_standards.sol   # 代币标准合约实现
+│   ├── lesson_17_dex_amm.sol           # AMM 合约实现
+│   ├── lesson_18_lending.sol           # 借贷协议合约
+│   ├── lesson_19_yield_aggregator.sol  # 收益聚合器合约
+│   ├── lesson_20_dao_governance.sol    # DAO 治理合约
+│   ├── TestToken.sol                   # 测试代币合约
+│   ├── mock_contracts.sol              # 模拟合约
+│   ├── README_lesson_16.md             # 代币标准教学文档
+│   ├── README_lesson_17.md             # AMM 教学文档
+│   ├── README_lesson_18.md             # 借贷协议教学文档
+│   ├── README_lesson_19.md             # 收益聚合器教学文档
+│   ├── README_lesson_20.md             # DAO 治理教学文档
+│   ├── INSTALLATION.md                 # 本文件 - 安装说明
+│   └── README_Stage4.md                # 第四阶段总结
 │
-├── lesson_18_lending.sol           # 借贷协议合约
-├── lesson_18_lending.test.js       # 借贷协议测试
-├── README_lesson_18.md             # 借贷协议教学文档
-│
-├── lesson_19_yield_aggregator.sol  # 收益聚合器合约
-├── lesson_19_yield_aggregator.test.js # 收益聚合器测试
-├── README_lesson_19.md             # 收益聚合器教学文档
-│
-├── lesson_20_dao_governance.sol    # DAO 治理合约
-├── lesson_20_dao_governance.test.js # DAO 治理测试
-├── README_lesson_20.md             # DAO 治理教学文档
-│
-├── TestToken.sol                   # 测试代币合约
-├── hardhat.config.js               # Hardhat 配置
-├── package.json                    # 依赖管理
-├── .gitignore                      # Git 忽略文件
-└── README_Stage4.md                # 第四阶段总结
+└── test/                          # 测试文件目录（根目录）
+    ├── lesson_16_token_standards.test.js   # 代币标准测试
+    ├── lesson_17_dex_amm.test.js           # AMM 测试
+    ├── lesson_18_lending.test.js           # 借贷协议测试
+    ├── lesson_19_yield_aggregator.test.js  # 收益聚合器测试
+    └── lesson_20_dao_governance.test.js    # DAO 治理测试
 ```
 
 ## 🎯 学习路径
@@ -124,7 +125,7 @@ npx hardhat console --network localhost
 npx hardhat test
 
 # 运行特定测试文件
-npx hardhat test lesson_17_dex_amm.test.js
+npx hardhat test test/lesson_17_dex_amm.test.js
 
 # 运行特定测试用例
 npx hardhat test --grep "应该成功存款"
@@ -256,29 +257,34 @@ git clone https://github.com/compound-finance/compound-protocol.git
 
 ## ✅ 课程完成检查清单
 
+### Lesson 16: 代币标准
+- [ ] 理解 ERC20/ERC721/ERC1155 标准
+- [ ] 掌握代币实现方法
+- [ ] 通过测试 `test/lesson_16_token_standards.test.js`
+
 ### Lesson 17: DEX 原理 - AMM
 - [ ] 理解恒定乘积公式
 - [ ] 掌握 LP 代币机制
 - [ ] 实现滑点保护
-- [ ] 通过所有测试
+- [ ] 通过测试 `test/lesson_17_dex_amm.test.js`
 
 ### Lesson 18: 借贷协议
 - [ ] 理解抵押和清算机制
 - [ ] 掌握利息计算
 - [ ] 实现风险管理
-- [ ] 通过所有测试
+- [ ] 通过测试 `test/lesson_18_lending.test.js`
 
 ### Lesson 19: 收益聚合器
 - [ ] 理解自动复投机制
 - [ ] 掌握策略模式
 - [ ] 实现费用优化
-- [ ] 通过所有测试
+- [ ] 通过测试 `test/lesson_19_yield_aggregator.test.js`
 
 ### Lesson 20: DAO 治理系统
 - [ ] 理解提案生命周期
 - [ ] 掌握投票机制
 - [ ] 实现时间锁保护
-- [ ] 通过所有测试
+- [ ] 通过测试 `test/lesson_20_dao_governance.test.js`
 
 ## 🎉 开始学习
 
